@@ -1,0 +1,14 @@
+some tools that might be handy:
+
+* Merge - two or more .crispr files together
+* Split - a .crispr file apart
+* Filter - remove/copy groups if they fit/don't fit criteria
+    + number of spacers
+* Extract - fasta sequences
+    + direct repeats
+    + spacers
+    + flankers
+    + concensus sequences
+* Draw - a graphviz representation of the crispr
+* Sanitise - change all the unique ids to incrementing numbers
+* Extract/Add metadata
