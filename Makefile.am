@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 ## Created by Anjuta
 
-SUBDIRS = src po
+SUBDIRS = src
 ACLOCAL_AMFLAGS = -I m4
 crisprtoolsdocdir = ${prefix}/doc/crisprtools
 crisprtoolsdoc_DATA = \

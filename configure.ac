@@ -5,9 +5,7 @@ AC_INIT(crisprtools, 0.0.1)
 
 AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE([1.11])
-
-AM_SILENT_RULES([yes])
+AM_INIT_AUTOMAKE([1.10])
 
 # extra configure options
 #
@@ -57,6 +55,12 @@ fi
 
 AC_PROG_CXX
 
+AX_LIB_XERCES
+if test $HAVE_XERCES = no; then
+AC_MSG_ERROR([Cannot find Xerces-c])
+else
+AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
+fi
 AC_CHECK_HEADERS([getopt.h stdlib.h])
 
 # only perform the check if rendering
@@ -101,16 +105,16 @@ fi
 dnl ***************************************************************************
 dnl Internationalization
 dnl ***************************************************************************
-IT_PROG_INTLTOOL([0.35.0])
+dnl IT_PROG_INTLTOOL([0.35.0])
 
-GETTEXT_PACKAGE=crisprtools
-AC_SUBST(GETTEXT_PACKAGE)
-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
-AM_GLIB_GNU_GETTEXT
+dnl GETTEXT_PACKAGE=crisprtools
+dnl AC_SUBST(GETTEXT_PACKAGE)
+dnl AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
+dnl AM_GLIB_GNU_GETTEXT
 
 
 
-LT_INIT
+dnl LT_INIT
 
 
 
@@ -120,5 +124,4 @@ LT_INIT
 AC_OUTPUT([
 Makefile
 src/Makefile
-po/Makefile.in
 ])

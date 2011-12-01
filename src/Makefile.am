@@ -2,10 +2,10 @@
 
 ## Created by Anjuta
 
-#AM_CPPFLAGS = \
-#	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
-#	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
-#	-DPACKAGE_DATA_DIR=\""$(datadir)"\"
+AM_LDFLAGS = @XERCES_LDFLAGS@
+if XERCES_FOUND
+LIBS = -lxerces-c
+endif
 
 
 
@@ -18,7 +18,7 @@ LIBS = @XERCES_C_LIBS@
 bin_PROGRAMS = crisprtools
 
 crisprtools_SOURCES = \
-	main.cc \
+	main.cpp \
 	StlExt.h \
 	MergeTool.cpp \
 	MergeTool.h \
