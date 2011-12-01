@@ -20,13 +20,26 @@ crisprtools is free software: you can redistribute it and/or modify it
 #include "CrisprException.h"
 #include <sstream>
 namespace crispr {
-CrisprException::CrisprException (const char * file, int line, const char * function ,const char * message)
-{
-	std::stringstream ss;
-	ss<<"[ERROR]: ";
-	ss<< message<<std::endl;
-	ss<<file<<" : "<<line<<" : "<<function;
-	errorMsg = ss.str();
-}
+    exception::exception (const char * file, int line, const char * function ,const char * message)
+    {
+        std::stringstream ss;
+        ss<<"[ERROR]: ";
+        ss<< message<<std::endl;
+        ss<<file<<" : "<<line<<" : "<<function;
+        errorMsg = ss.str();
+    }
 
+    input_exception::input_exception( const char * message)
+    {
+        errorMsg = message;
+    }
+    
+    xml_exception::xml_exception( const char * file, int line, const char * function ,const char * message)
+    {
+        std::stringstream ss;
+        ss<<"[XML_ERROR]: ";
+        ss<< message<<std::endl;
+        ss<<file<<" : "<<line<<" : "<<function;
+        errorMsg = ss.str();
+    }
 }

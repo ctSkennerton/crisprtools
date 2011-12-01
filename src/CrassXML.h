@@ -197,6 +197,10 @@ class CrassXML
         void parseAssemblyForContigIds(xercesc::DOMElement* currentElement, std::set<std::string>& wantedContigs, std::list<std::string>& spacersForAssembly);
         void getSpacerIdForAssembly(xercesc::DOMElement* currentElement, std::list<std::string>& spacersForAssembly);
         
+    
+        // Parsing functions
+        void setFileParser(const char * XMLFile);
+    
         //DOMDocument Creation returns root node
         xercesc::DOMElement * createDOMDocument(std::string& rootElement, std::string& versionNumber, int& errorNumber );
         xercesc::DOMElement * createDOMDocument(const char * rootElement, const char * versionNumber, int& errorNumber );
@@ -257,7 +261,7 @@ class CrassXML
         bool printDOMToScreen(void);
     
     private:
-        xercesc::XercesDOMParser * mConfigFileParser;			// parsing object
+        xercesc::XercesDOMParser * CX_FileParser;			// parsing object
         xercesc::DOMDocument * CX_DocElem;
         // grep ATTLIST crass.dtd | sed -e "s%[^ ]* [^ ]* \([^ ]*\) .*%XMLCh\* ATTR_\1;%" | sort | uniq
         // grep ELEMENT crass.dtd | sed -e "s%[^ ]* \([^ ]*\) .*%XMLCh\* TAG_\1;%" | sort | uniq

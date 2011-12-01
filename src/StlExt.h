@@ -98,4 +98,30 @@ void tokenize(const std::string& str, ContainerT& tokens, const std::string& del
     }
 }
 
+template < class ContainerT >
+void split(const std::string& str, ContainerT& tokens, const std::string& delimiters = " ", const bool trimEmpty = false)
+{
+    std::string::size_type pos, lastPos = 0;
+    while(true)
+    {
+        pos = str.find_first_of(delimiters, lastPos);
+        if(pos == std::string::npos)
+        {
+            pos = str.length();
+            
+            if(pos != lastPos || !trimEmpty)
+                tokens.insert( typename ContainerT::value_type(str.data()+lastPos, (typename ContainerT::value_type::size_type)pos - lastPos ));
+            
+            break;
+        }
+        else
+        {
+            if(pos != lastPos || !trimEmpty)
+                tokens.insert(typename ContainerT::value_type(str.data()+lastPos, (typename ContainerT::value_type::size_type)pos-lastPos ));
+        }
+        
+        lastPos = pos + 1;
+    }
+}
+
 #endif

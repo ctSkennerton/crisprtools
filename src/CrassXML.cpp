@@ -50,6 +50,7 @@
 
 // local includes
 #include "CrassXML.h"
+#include "CrisprException.h"
 #include "StlExt.h"
 
 using namespace xercesc;
@@ -67,7 +68,7 @@ CrassXML::CrassXML(void)
       XMLString::release( &message );
       // throw exception here to return ERROR_XERCES_INIT
     }
-    mConfigFileParser = new XercesDOMParser;
+    CX_FileParser = new XercesDOMParser;
     CX_DocElem = NULL;
     
     // USE sed
@@ -124,7 +125,7 @@ CrassXML::CrassXML(void)
 CrassXML::~CrassXML(void)
 {
     // Free memory
-    delete mConfigFileParser;
+    delete CX_FileParser;
     if (CX_DocElem != NULL) 
     {
         CX_DocElem->release();
@@ -208,17 +209,17 @@ void CrassXML::parseCrassXMLFile(std::string XMLFile)
         throw ( std::runtime_error("File can not be read\n"));
     
     // Configure DOM parser.
-    mConfigFileParser->setValidationScheme( XercesDOMParser::Val_Never );
-    mConfigFileParser->setDoNamespaces( false );
-    mConfigFileParser->setDoSchema( false );
-    mConfigFileParser->setLoadExternalDTD( false );
+    CX_FileParser->setValidationScheme( XercesDOMParser::Val_Never );
+    CX_FileParser->setDoNamespaces( false );
+    CX_FileParser->setDoSchema( false );
+    CX_FileParser->setLoadExternalDTD( false );
     
     try
     {
-        mConfigFileParser->parse( XMLFile.c_str() );
+        CX_FileParser->parse( XMLFile.c_str() );
         
         // no need to free this pointer - owned by the parent parser object
-        DOMDocument* xmlDoc = mConfigFileParser->getDocument();
+        DOMDocument* xmlDoc = CX_FileParser->getDocument();
         
         // Get the top-level element: 
         DOMElement* elementRoot = xmlDoc->getDocumentElement();
@@ -271,17 +272,17 @@ void CrassXML::parseCrassXMLFile(std::string XMLFile, std::string& wantedGroup, 
 
     
     // Configure DOM parser.
-    mConfigFileParser->setValidationScheme( XercesDOMParser::Val_Never );
-    mConfigFileParser->setDoNamespaces( false );
-    mConfigFileParser->setDoSchema( false );
-    mConfigFileParser->setLoadExternalDTD( false );
+    CX_FileParser->setValidationScheme( XercesDOMParser::Val_Never );
+    CX_FileParser->setDoNamespaces( false );
+    CX_FileParser->setDoSchema( false );
+    CX_FileParser->setLoadExternalDTD( false );
     
     try
     {
-        mConfigFileParser->parse( XMLFile.c_str() );
+        CX_FileParser->parse( XMLFile.c_str() );
         
         // no need to free this pointer - owned by the parent parser object
-        xercesc::DOMDocument * xmlDoc = mConfigFileParser->getDocument();
+        xercesc::DOMDocument * xmlDoc = CX_FileParser->getDocument();
         
         // Get the top-level element: 
         xercesc::DOMElement * elementRoot = xmlDoc->getDocumentElement();
@@ -428,6 +429,31 @@ void CrassXML::getSpacerIdForAssembly(xercesc::DOMElement* currentElement, std::
         }
     }
 }
+
+
+void CrassXML::setFileParser(const char * XMLFile)
+{
+    // Configure DOM parser.
+    CX_FileParser->setValidationScheme( XercesDOMParser::Val_Never );
+    CX_FileParser->setDoNamespaces( false );
+    CX_FileParser->setDoSchema( false );
+    CX_FileParser->setLoadExternalDTD( false );
+    
+    try
+    {
+        CX_FileParser->parse( XMLFile );
+        CX_DocElem = CX_FileParser->getDocument();        
+    }
+    catch( xercesc::XMLException& e )
+    {
+        char* message = xercesc::XMLString::transcode( e.getMessage() );
+        std::stringstream errBuf;
+        errBuf << "Error parsing file: " << message << std::flush;
+        XMLString::release( &message );
+        throw crispr::xml_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__,(errBuf.str()).c_str());
+    }
+}
+
 
 DOMElement * CrassXML::createDOMDocument(std::string& rootElement, std::string& versionNumber, int& errorNumber )   
 {
