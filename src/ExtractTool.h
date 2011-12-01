@@ -16,3 +16,67 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef EXTRACTTOOL_H
+#define EXTRACTTOOL_H
+
+#include <string>
+#include <vector>
+
+class ExtractTool 
+{
+	public:
+
+		// constructor
+		ExtractTool();
+
+		// destructor
+		~ExtractTool();
+
+		
+		// get
+		inline bool getDirectRepeat(void) { return ET_DirectRepeat;};
+		inline bool getSpacer(void) { return ET_Spacer;};
+		inline bool getFlanker(void) { return ET_Flanker;};
+		inline std::vector<std::string> getGroup(void) { return ET_Group;};
+		inline bool getSplitGroup(void) { return ET_SplitGroup; };
+		inline bool getSplitType(void) { return ET_SplitType;};
+		inline bool getSubset(void) { return ET_Subset; };
+
+		// set
+
+		inline void setDirectRepeat(bool d) { ET_DirectRepeat = d;};
+		inline void setSpacer(bool s) { ET_Spacer = s;};
+		inline void setFlanker(bool f) { ET_Flanker = f;};
+		inline void setGroup(std::vector<std::string> g) {ET_Group = g;};
+		inline void setSplitGroup(bool x) { ET_SplitGroup = x;};
+		inline void setSplitType(bool y) {ET_SplitType = y;};
+
+		// option processing
+		void generateGroupsFromString( std::string groupString);
+		int processOptions(int argc, char ** argv);
+
+		// process the input
+		int processInputFile(const char * inputFile);
+	private:
+		bool ET_DirectRepeat;						// extract the direct repeat sequences
+		bool ET_Spacer;								// extract the spacer sequences
+		bool ET_Flanker;							// extract the flanking sequences
+		std::vector<std::string> ET_Group;	// holds a comma separated list of groups that need to be extracted
+		bool ET_SplitGroup; 						// print results for each group to a separate file
+		bool ET_SplitType;							// print different types of results into different files
+		bool ET_Subset;								// are we doing all groups
+};
+
+
+/* 
+	Global functions
+*/
+
+int extractMain(int argc, char ** argv);
+
+void extractUsage(void);
+
+
+
+
+#endif

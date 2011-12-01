@@ -20,14 +20,26 @@ crisprtools is free software: you can redistribute it and/or modify it
 #ifndef _CRISPREXCEPTION_H_
 #define _CRISPREXCEPTION_H_
 
-class CrisprException: public std::exception 
+#include <exception>
+#include <string>
+namespace crispr {
+class CrisprException 
 {
 public:
+	// constructor
+	CrisprException(const char * file, int line, const char * function ,const char * message);
 
+	// destructor
+	~CrisprException(){}
+
+	virtual std::string what(void)
+	{
+		return errorMsg;
+	}
 protected:
-
-private:
+	std::string errorMsg;
 
 };
 
+}
 #endif // _CRISPREXCEPTION_H_
