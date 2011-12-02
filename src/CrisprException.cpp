@@ -42,4 +42,13 @@ namespace crispr {
         ss<<file<<" : "<<line<<" : "<<function;
         errorMsg = ss.str();
     }
+    
+    runtime_exception::runtime_exception( const char * file, int line, const char * function ,const char * message)
+    {
+        std::stringstream ss;
+        ss<<"[RUNTIME_ERROR]: ";
+        ss<< message<<std::endl;
+        ss<<file<<" : "<<line<<" : "<<function;
+        errorMsg = ss.str();
+    }
 }

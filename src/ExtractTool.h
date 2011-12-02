@@ -21,11 +21,14 @@
 
 #include <string>
 #include <set>
+#include <iostream>
+#include <fstream>
+#include "CrassXML.h"
 
 class ExtractTool 
 {
 	public:
-
+    enum ELEMENT_TYPE{REPEAT,SPACER,CONSENSUS,FLANKER};
 		// constructor
 		ExtractTool();
 
@@ -57,15 +60,22 @@ class ExtractTool
 
 		// process the input
 		int processInputFile(const char * inputFile);
-        void parseWantedGroups(void);
+        void parseWantedGroups(CrassXML& xmlObj, xercesc::DOMElement * rootElement);
+        void extractDataFromGroup(CrassXML& xmlDoc, xercesc::DOMElement * currentGroup);
+    void processData(CrassXML& xmlDoc, xercesc::DOMElement * currentType, ELEMENT_TYPE wantedType, std::string gid, std::ostream& outStream);
 	private:
 		bool ET_DirectRepeat;						// extract the direct repeat sequences
 		bool ET_Spacer;								// extract the spacer sequences
 		bool ET_Flanker;							// extract the flanking sequences
-		std::set<std::string> ET_Group;	// holds a comma separated list of groups that need to be extracted
+		std::set<std::string> ET_Group;             // holds a comma separated list of groups that need to be extracted
 		bool ET_SplitGroup; 						// print results for each group to a separate file
 		bool ET_SplitType;							// print different types of results into different files
 		bool ET_Subset;								// are we doing all groups
+        std::ofstream ET_SpacerStream;              // the current output stream for spacers
+        std::ofstream ET_RepeatStream;
+        std::ofstream ET_FlankerStream;
+        std::ofstream ET_OneStream;
+        std::ofstream ET_GroupStream;
 };
 
 

@@ -124,15 +124,16 @@ CrassXML::CrassXML(void)
 
 CrassXML::~CrassXML(void)
 {
-    // Free memory
-    delete CX_FileParser;
-    if (CX_DocElem != NULL) 
-    {
-        CX_DocElem->release();
-    }
+
     try // Free memory
     {
-        
+        // Free memory
+
+        delete CX_FileParser;
+        if (CX_DocElem != NULL) 
+        {
+            CX_DocElem->release();
+        }
         XMLString::release( &TAG_assembly );
         XMLString::release( &TAG_bf );
         XMLString::release( &TAG_bflankers );
@@ -185,6 +186,8 @@ CrassXML::~CrassXML(void)
 
       XMLPlatformUtils::Terminate();  // Terminate after release of memory
 }
+
+
 
 void CrassXML::parseCrassXMLFile(std::string XMLFile)
 {
@@ -431,7 +434,7 @@ void CrassXML::getSpacerIdForAssembly(xercesc::DOMElement* currentElement, std::
 }
 
 
-void CrassXML::setFileParser(const char * XMLFile)
+DOMDocument * CrassXML::setFileParser(const char * XMLFile)
 {
     // Configure DOM parser.
     CX_FileParser->setValidationScheme( XercesDOMParser::Val_Never );
@@ -442,7 +445,7 @@ void CrassXML::setFileParser(const char * XMLFile)
     try
     {
         CX_FileParser->parse( XMLFile );
-        CX_DocElem = CX_FileParser->getDocument();        
+        return CX_FileParser->getDocument();        
     }
     catch( xercesc::XMLException& e )
     {

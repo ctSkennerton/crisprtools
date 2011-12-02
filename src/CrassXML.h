@@ -176,6 +176,12 @@ class CrassXML
         inline XMLCh* getNotes(void) { return TAG_notes;} ;
         inline XMLCh* getSpacer(void) { return TAG_spacer;} ;
         inline XMLCh* getSpacers(void) { return TAG_spacers;} ;
+    
+    
+        xercesc::DOMElement * getRootElement(void)
+        {
+            return CX_DocElem->getDocumentElement();
+        }
         //
         // Working functions
         //
@@ -199,7 +205,7 @@ class CrassXML
         
     
         // Parsing functions
-        void setFileParser(const char * XMLFile);
+        xercesc::DOMDocument * setFileParser(const char * XMLFile);
     
         //DOMDocument Creation returns root node
         xercesc::DOMElement * createDOMDocument(std::string& rootElement, std::string& versionNumber, int& errorNumber );

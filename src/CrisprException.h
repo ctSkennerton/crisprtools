@@ -70,5 +70,19 @@ namespace crispr {
     protected:
         std::string errorMsg;
     };
+    
+    class runtime_exception: public exception{
+    public:
+        runtime_exception(const char * file, int line, const char * function ,const char * message);
+        // destructor
+        ~runtime_exception(){}
+        
+        virtual std::string what(void)
+        {
+            return errorMsg;
+        }
+    protected:
+        std::string errorMsg;
+    };
 }
 #endif // _CRISPREXCEPTION_H_
