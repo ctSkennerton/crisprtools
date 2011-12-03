@@ -37,7 +37,9 @@ crisprtools_SOURCES = \
 	CrassXML.h \
 	CrassXML.cpp \
 	CrisprException.h \
-	CrisprException.cpp 
+	CrisprException.cpp \
+    Utils.cpp \
+    Utils.h
 
 
 crisprtools_LDFLAGS = 

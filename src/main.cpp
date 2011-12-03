@@ -1,9 +1,9 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
- * main.cc
+ * main.cpp
  * Copyright (C) Connor Skennerton 2011 <c.skennerton@gmail.com>
  * 
-crisprtools is free software: you can redistribute it and/or modify it
+ * crisprtools is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
@@ -21,7 +21,7 @@ crisprtools is free software: you can redistribute it and/or modify it
 #include <getopt.h>
 #include <cstring>
 
-
+#include "Utils.h"
 #include "MergeTool.h"
 #include "SplitTool.h"
 #include "ExtractTool.h"
@@ -35,15 +35,14 @@ void usage (void)
 	std::cout<<PACKAGE_NAME<<" ("<<PACKAGE_VERSION<<")"<<std::endl;
 	std::cout<<PACKAGE_NAME<<" is a set of smal utilities for manipulating .crispr files"<<std::endl;
 	std::cout<<"The .crispr file specification is a standard xml based format for describing CRISPRs"<<std::endl;
-	std::cout<<"Type "<<PACKAGE_NAME<<" <subcommand> -h for help on each utility";
-	std::cout<<"Usage:"<<std::endl;
-	std::cout<<PACKAGE_NAME<<" merge [options] file.crispr[1,n]"<<std::endl;
-	std::cout<<PACKAGE_NAME<<" split [options] file.crispr[1,n]"<<std::endl;
-	std::cout<<PACKAGE_NAME<<" extract [options] file.crispr[1,n]"<<std::endl;
-	std::cout<<PACKAGE_NAME<<" filter [options] file.crispr[1,n]"<<std::endl;
-	std::cout<<PACKAGE_NAME<<" sanitise [options] file.crispr[1,n]"<<std::endl;
-	std::cout<<PACKAGE_NAME<<" draw [options] file.crispr[1,n]"<<std::endl;
-	std::cout<<PACKAGE_NAME<<" stat [options] file.crispr[1,n]"<<std::endl;
+	std::cout<<"Type "<<PACKAGE_NAME<<" <subcommand> -h for help on each utility"<<std::endl;
+	std::cout<<"Usage:\t"<<PACKAGE_NAME<<" <subcommand> [options]"<<std::endl<<std::endl;
+    std::cout<<"subcommand:  merge       combine multiple files"<<std::endl;
+	std::cout<<"             extract     extract sequences in fasta"<<std::endl;
+	std::cout<<"             filter      make new files based on parameters"<<std::endl;
+	std::cout<<"             sanitise    change the IDs of elements"<<std::endl;
+	std::cout<<"             draw        create a rendered image of the CRISPR with Graphviz"<<std::endl;
+	std::cout<<"             stat        show statistics on some or all CRISPRs"<<std::endl;
 }
 
 int main(int argc, char ** argv)

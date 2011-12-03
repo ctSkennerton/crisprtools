@@ -51,7 +51,6 @@
 // local includes
 #include "CrassXML.h"
 #include "CrisprException.h"
-#include "StlExt.h"
 
 using namespace xercesc;
 

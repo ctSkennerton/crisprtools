@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "ExtractTool.h"
-#include "StlExt.h"
+#include "Utils.h"
 #include "config.h"
 #include "CrisprException.h"
 #include "CrassXML.h"
@@ -23,6 +23,8 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 
 ExtractTool::ExtractTool (void)
@@ -33,6 +35,7 @@ ExtractTool::ExtractTool (void)
 	ET_SplitGroup = false;
 	ET_SplitType = false;
 	ET_Subset = false;
+    ET_OutputPrefix = "./";
 }
 
 ExtractTool::~ExtractTool (void)
@@ -53,7 +56,7 @@ int ExtractTool::processOptions (int argc, char ** argv)
     static struct option long_options [] = {       
         {"help", required_argument, NULL, 'h'}
     };
-	while((c = getopt_long(argc, argv, "hg:sdfxy", long_options, &index)) != -1)
+	while((c = getopt_long(argc, argv, "hg:sdfxyo:", long_options, &index)) != -1)
 	{
         switch(c)
 		{
@@ -93,6 +96,23 @@ int ExtractTool::processOptions (int argc, char ** argv)
 				ET_SplitType = true;
                 break;
 			}
+            case 'o':
+            {
+                ET_OutputPrefix = optarg;
+                // just in case the user put '.' or '..' or '~' as the output directory
+                if (ET_OutputPrefix[ET_OutputPrefix.length() - 1] != '/')
+                {
+                    ET_OutputPrefix += '/';
+                }
+                
+                // check if our output folder exists
+                struct stat file_stats;
+                if (0 != stat(ET_OutputPrefix.c_str(),&file_stats)) 
+                {
+                    recursiveMkdir(ET_OutputPrefix);
+                }
+                break;
+            }
             default:
             {
                 extractUsage();
@@ -118,19 +138,19 @@ int ExtractTool::processInputFile(const char * inputFile)
         // neither -x or -y
         if ((!ET_SplitGroup) && (!ET_SplitType)) {
             // just open a single file handle
-            ET_OneStream.open("extracted_data.fa");
+            ET_OneStream.open((ET_OutputPrefix +"extracted_data.fa").c_str());
         
         } else if(!ET_SplitGroup) {
             // -y but not -x
             // we are only spliting on type make three generic files
             if (ET_DirectRepeat) {
-                ET_RepeatStream.open("direct_repeats.fa");
+                ET_RepeatStream.open((ET_OutputPrefix + "direct_repeats.fa").c_str());
             }
             if (ET_Spacer) {
-                ET_SpacerStream.open("spacers.fa");
+                ET_SpacerStream.open((ET_OutputPrefix + "spacers.fa").c_str());
             }
             if (ET_Flanker) {
-                ET_FlankerStream.open("flankers.fa");
+                ET_FlankerStream.open((ET_OutputPrefix + "flankers.fa").c_str());
             }
         }
         
@@ -193,16 +213,16 @@ void ExtractTool::parseWantedGroups(CrassXML& xmlObj, xercesc::DOMElement * root
                         if (ET_Group.find(group_id.substr(1)) != ET_Group.end() ) {
                             if (ET_SplitGroup) {
                                 if (!ET_SplitType) {
-                                    ET_GroupStream.open((group_id + "_extracted_data.fa").c_str());
+                                    ET_GroupStream.open((ET_OutputPrefix + group_id + "_extracted_data.fa").c_str());
                                 } else {
                                     if (ET_Spacer) {
-                                        ET_SpacerStream.open((group_id + "_spacers.fa").c_str(),std::ios::app);
+                                        ET_SpacerStream.open((ET_OutputPrefix + group_id + "_spacers.fa").c_str());
                                     }
                                     if (ET_DirectRepeat) {
-                                        ET_RepeatStream.open((group_id + "_direct_repeats.fa").c_str(),std::ios::app);
+                                        ET_RepeatStream.open((ET_OutputPrefix + group_id + "_direct_repeats.fa").c_str());
                                     }
                                     if (ET_Flanker) {
-                                        ET_FlankerStream.open((group_id + "_flankers.fa").c_str(),std::ios::app);
+                                        ET_FlankerStream.open((ET_OutputPrefix + group_id + "_flankers.fa").c_str());
                                     }
                                 }
                             }
@@ -213,16 +233,16 @@ void ExtractTool::parseWantedGroups(CrassXML& xmlObj, xercesc::DOMElement * root
                     } else {
                         if (ET_SplitGroup) {
                             if (!ET_SplitType) {
-                                ET_GroupStream.open((group_id + "_extracted_data.fa").c_str());
+                                ET_GroupStream.open((ET_OutputPrefix + group_id + "_extracted_data.fa").c_str());
                             } else {
                                 if (ET_Spacer) {
-                                    ET_SpacerStream.open((group_id + "_spacers.fa").c_str(),std::ios::app);
+                                    ET_SpacerStream.open((ET_OutputPrefix + group_id + "_spacers.fa").c_str());
                                 }
                                 if (ET_DirectRepeat) {
-                                    ET_RepeatStream.open((group_id + "_direct_repeats.fa").c_str(),std::ios::app);
+                                    ET_RepeatStream.open((ET_OutputPrefix + group_id + "_direct_repeats.fa").c_str());
                                 }
                                 if (ET_Flanker) {
-                                    ET_FlankerStream.open((group_id + "_flankers.fa").c_str(),std::ios::app);
+                                    ET_FlankerStream.open((ET_OutputPrefix + group_id + "_flankers.fa").c_str());
                                 }
                             }
                         }
@@ -429,6 +449,7 @@ void extractUsage (void)
 	std::cout<<PACKAGE_NAME<<" extract [-ghyxsdf] file.crispr"<<std::endl;
 	std::cout<<"Options:"<<std::endl;
 	std::cout<<"-h					print this handy help message"<<std::endl;
+    std::cout<<"-o DIR              output file directory  [default: .]" <<std::endl; 
 	std::cout<<"-g INT[,n]          a comma separated list of group IDs that you would like to extract data from."<<std::endl;
 	std::cout<<"					Note that only the group number is needed, do not use prefixes like 'Group' or 'G', which"<<std::endl;
 	std::cout<<"					are sometimes used in file names or in a .crispr file"<<std::endl;

@@ -76,6 +76,7 @@ class ExtractTool
         std::ofstream ET_FlankerStream;
         std::ofstream ET_OneStream;
         std::ofstream ET_GroupStream;
+    std::string ET_OutputPrefix;
 };
 
 

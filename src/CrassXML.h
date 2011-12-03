@@ -72,6 +72,9 @@
 #endif
 
 
+#include "StlExt.h"
+
+
 // Error codes
 enum {
    ERROR_ARGS = 1,
@@ -181,6 +184,11 @@ class CrassXML
         xercesc::DOMElement * getRootElement(void)
         {
             return CX_DocElem->getDocumentElement();
+        }
+    
+        xercesc::DOMDocument * getDocumentObj(void)
+        {
+            return CX_DocElem;
         }
         //
         // Working functions
