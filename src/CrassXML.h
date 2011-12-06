@@ -215,6 +215,8 @@ class CrassXML
         // Parsing functions
         xercesc::DOMDocument * setFileParser(const char * XMLFile);
     
+    
+    
         //DOMDocument Creation returns root node
         xercesc::DOMElement * createDOMDocument(std::string& rootElement, std::string& versionNumber, int& errorNumber );
         xercesc::DOMElement * createDOMDocument(const char * rootElement, const char * versionNumber, int& errorNumber );
@@ -273,6 +275,8 @@ class CrassXML
         //
         bool printDOMToFile(std::string outFileName );
         bool printDOMToScreen(void);
+        bool printDOMToFile(std::string outFileName, xercesc::DOMDocument * domDoc );
+        bool printDOMToScreen( xercesc::DOMDocument * domDoc);
     
     private:
         xercesc::XercesDOMParser * CX_FileParser;			// parsing object
@@ -322,6 +326,7 @@ class CrassXML
         XMLCh* TAG_spacers;
 
 };
+
 
 #endif //CrassXML_h
 

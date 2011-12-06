@@ -457,6 +457,7 @@ DOMDocument * CrassXML::setFileParser(const char * XMLFile)
 }
 
 
+
 DOMElement * CrassXML::createDOMDocument(std::string& rootElement, std::string& versionNumber, int& errorNumber )   
 {
     DOMImplementation* impl =  DOMImplementationRegistry::getDOMImplementation(STR_2_XMLCH("Core"));
@@ -823,5 +824,151 @@ bool CrassXML::printDOMToScreen(void )
     
 }
 
+bool CrassXML::printDOMToFile(std::string outFileName, DOMDocument * docDOM )
+{
+    bool retval;
+    
+    try
+    {
+        // get a serializer, an instance of DOMLSSerializer
+        XMLCh tempStr[3] = {chLatin_L, chLatin_S, chNull};
+        DOMImplementation *impl          = DOMImplementationRegistry::getDOMImplementation(tempStr);
+        DOMLSSerializer   *theSerializer = ((DOMImplementationLS*)impl)->createLSSerializer();
+        DOMLSOutput       *theOutputDesc = ((DOMImplementationLS*)impl)->createLSOutput();
+        
+        // set user specified output encoding
+        theOutputDesc->setEncoding(STR_2_XMLCH("ISO8859-1"));
+        
+        
+        DOMConfiguration* serializerConfig = theSerializer->getDomConfig();
+        
+        // set feature if the serializer supports the feature/mode
+        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTSplitCdataSections, true))
+            serializerConfig->setParameter(XMLUni::fgDOMWRTSplitCdataSections, true);
+        
+        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTDiscardDefaultContent, true))
+            serializerConfig->setParameter(XMLUni::fgDOMWRTDiscardDefaultContent, true);
+        
+        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTFormatPrettyPrint, true))
+            serializerConfig->setParameter(XMLUni::fgDOMWRTFormatPrettyPrint, true);
+        
+        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTBOM, false))
+            serializerConfig->setParameter(XMLUni::fgDOMWRTBOM, false);
+        
+        //
+        // Plug in a format target to receive the resultant
+        // XML stream from the serializer.
+        //
+        // StdOutFormatTarget prints the resultant XML stream
+        // to stdout once it receives any thing from the serializer.
+        //
+        XMLFormatTarget *myFormTarget;
+        myFormTarget = new LocalFileFormatTarget(outFileName.c_str());
+        //myFormTarget=new StdOutFormatTarget();
+        
+        theOutputDesc->setByteStream(myFormTarget);
+        
+        theSerializer->write(docDOM, theOutputDesc);
+        
+        theOutputDesc->release();
+        theSerializer->release();
+        
+        //
+        // Filter, formatTarget and error handler
+        // are NOT owned by the serializer.
+        //
+        delete myFormTarget;
+        retval = true;
+        
+    }
+    catch (const OutOfMemoryException&)
+    {
+        XERCES_STD_QUALIFIER cerr << "OutOfMemoryException" << XERCES_STD_QUALIFIER endl;
+        retval = false;
+    }
+    catch (XMLException& e)
+    {
+        XERCES_STD_QUALIFIER cerr << "An error occurred during creation of output transcoder. Msg is:"
+        << XERCES_STD_QUALIFIER endl
+        << XMLCH_2_STR(e.getMessage()) << XERCES_STD_QUALIFIER endl;
+        retval = false;
+    }
+    
+    return retval;
+    
+}
+
+bool CrassXML::printDOMToScreen(DOMDocument * domDoc )
+{
+    bool retval;
+    
+    try
+    {
+        // get a serializer, an instance of DOMLSSerializer
+        XMLCh tempStr[3] = {chLatin_L, chLatin_S, chNull};
+        DOMImplementation *impl          = DOMImplementationRegistry::getDOMImplementation(tempStr);
+        DOMLSSerializer   *theSerializer = ((DOMImplementationLS*)impl)->createLSSerializer();
+        DOMLSOutput       *theOutputDesc = ((DOMImplementationLS*)impl)->createLSOutput();
+        
+        // set user specified output encoding
+        theOutputDesc->setEncoding(STR_2_XMLCH("ISO8859-1"));
+        
+        
+        DOMConfiguration* serializerConfig=theSerializer->getDomConfig();
+        
+        // set feature if the serializer supports the feature/mode
+        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTSplitCdataSections, true))
+            serializerConfig->setParameter(XMLUni::fgDOMWRTSplitCdataSections, true);
+        
+        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTDiscardDefaultContent, true))
+            serializerConfig->setParameter(XMLUni::fgDOMWRTDiscardDefaultContent, true);
+        
+        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTFormatPrettyPrint, true))
+            serializerConfig->setParameter(XMLUni::fgDOMWRTFormatPrettyPrint, true);
+        
+        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTBOM, false))
+            serializerConfig->setParameter(XMLUni::fgDOMWRTBOM, false);
+        
+        //
+        // Plug in a format target to receive the resultant
+        // XML stream from the serializer.
+        //
+        // StdOutFormatTarget prints the resultant XML stream
+        // to stdout once it receives any thing from the serializer.
+        //
+        XMLFormatTarget *myFormTarget;
+        myFormTarget=new StdOutFormatTarget();
+        
+        theOutputDesc->setByteStream(myFormTarget);
+        
+        theSerializer->write(domDoc, theOutputDesc);
+        
+        theOutputDesc->release();
+        theSerializer->release();
+        
+        //
+        // Filter, formatTarget and error handler
+        // are NOT owned by the serializer.
+        //
+        delete myFormTarget;
+        retval = true;
+        
+    }
+    catch (const OutOfMemoryException&)
+    {
+        XERCES_STD_QUALIFIER cerr << "OutOfMemoryException" << XERCES_STD_QUALIFIER endl;
+        retval = false;
+    }
+    catch (XMLException& e)
+    {
+        XERCES_STD_QUALIFIER cerr << "An error occurred during creation of output transcoder. Msg is:"
+        << XERCES_STD_QUALIFIER endl
+        << XMLCH_2_STR(e.getMessage()) << XERCES_STD_QUALIFIER endl;
+        retval = false;
+    }
+    
+    return retval;
+    
+}
 
 
