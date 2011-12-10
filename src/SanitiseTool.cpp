@@ -4,7 +4,7 @@
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
+// the Free Software Foundation; either version 3 of the License, or
 // (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -24,11 +24,16 @@
 int SanitiseTool::processOptions (int argc, char ** argv)
 {
 	int c;
-	while((c = getopt(argc, argv, "hscfdo:")) != -1)
+	while((c = getopt(argc, argv, "ahscfdo:")) != -1)
 	{
         switch(c)
 		{
-			case 'h':
+			case 'a':
+            {
+                ST_contigs = ST_Repeats = ST_Flank = ST_Spacers = true;
+                break;
+            }
+            case 'h':
 			{
 				sanitiseUsage();
 				exit(1);

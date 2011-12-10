@@ -4,8 +4,9 @@
 
 AM_LDFLAGS = @XERCES_LDFLAGS@
 if XERCES_FOUND
-LIBS = -lxerces-c
+LIBS = -lxerces-c -lgvc -lgraph -lcdt
 endif
+
 
 
 
@@ -13,7 +14,7 @@ AM_CFLAGS =\
 	 -Wall\
 	 -g
 
-LIBS = @XERCES_C_LIBS@
+LIBS = @XERCES_C_LIBS@ 
 
 bin_PROGRAMS = crisprtools
 
@@ -39,7 +40,9 @@ crisprtools_SOURCES = \
 	CrisprException.h \
 	CrisprException.cpp \
     Utils.cpp \
-    Utils.h
+    Utils.h \
+    Graph.cpp \
+    Graph.h
 
 
 crisprtools_LDFLAGS = 
