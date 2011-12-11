@@ -61,6 +61,13 @@ AC_MSG_ERROR([Cannot find Xerces-c])
 else
 AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
 fi
+
+AC_CHECK_LIB([gvc],[gvContext])
+AC_CHECK_LIB([cdt],[dtopen])
+AC_CHECK_LIB([graph],[agnode])
+
+
+
 AC_CHECK_HEADERS([getopt.h stdlib.h])
 
 # only perform the check if rendering
@@ -102,19 +109,6 @@ if test x$rendering = xtrue; then
     fi 
 fi
 
-dnl ***************************************************************************
-dnl Internationalization
-dnl ***************************************************************************
-dnl IT_PROG_INTLTOOL([0.35.0])
-
-dnl GETTEXT_PACKAGE=crisprtools
-dnl AC_SUBST(GETTEXT_PACKAGE)
-dnl AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE", [GETTEXT package name])
-dnl AM_GLIB_GNU_GETTEXT
-
-
-
-dnl LT_INIT
 
 
 

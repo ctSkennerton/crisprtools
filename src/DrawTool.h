@@ -19,9 +19,11 @@
 
 #include "CrassXML.h"
 #include "CrisprGraph.h"
+#include "Rainbow.h"
 #include <graphviz/gvc.h>
 #include <set>
 #include <string>
+#include <map>
 
 typedef std::vector<crispr::graph * > graphVector;
 class DrawTool {
@@ -33,18 +35,61 @@ class DrawTool {
     
     GVC_t * DT_Gvc;
     std::string DT_OutputFile;
-    std::string DT_RenderingAlgorithm;
-    std::string DT_OutputFormat;
+    char * DT_RenderingAlgorithm;
+    char * DT_OutputFormat;
     std::set<std::string> DT_Groups;
+    std::map<std::string, std::pair<bool, double> > DT_SpacerCoverage;
     bool DT_Subset;
     graphVector DT_Graphs;
+    Rainbow DT_Rainbow;
+    RB_TYPE DT_ColourType;
+    int DT_Bins;
+    double DT_UpperLimit;
+    double DT_LowerLimit;
     
+    
+    void resetInitialLimits(void) 
+    {        
+        DT_LowerLimit = 10000000;
+        DT_UpperLimit = 0;
+    }
+    
+    void recalculateLimits(double d) 
+    {
+        if (d > DT_UpperLimit) 
+        {
+            DT_UpperLimit = d;
+        }
+        if(d < DT_LowerLimit)
+        {
+            DT_LowerLimit = d;
+        }
+    }
+    
+    void setColours(void)
+    {
+        DT_Rainbow.setType(DT_ColourType);
+        if (DT_Bins > 0) 
+        {
+            DT_Rainbow.setLimits(DT_LowerLimit, DT_UpperLimit, DT_Bins);
+        } 
+        else 
+        {
+            DT_Rainbow.setLimits(DT_LowerLimit, DT_UpperLimit);
+        }
+    }
 
 public:
     DrawTool()
     {
         DT_Gvc = gvContext();
         DT_Subset = false;
+        DT_RenderingAlgorithm = "dot";
+        DT_OutputFormat = "eps";
+        DT_LowerLimit = 10000000;
+        DT_UpperLimit = 0;
+        DT_ColourType = RED_BLUE;
+        DT_Bins = -1;
     }
     
     ~DrawTool();
@@ -60,10 +105,10 @@ public:
     void generateGroupsFromString ( std::string str);
     int processInputFile(const char * inputFile);
     void parseGroup(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseData(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
+    void parseData(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * current_graph);
+    void parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * current_graph);
+    void parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * current_graph);
+    void parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * current_graph);
     
     void parseAssembly(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * currentGraph);
     void parseContig(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * currentGraph, std::string& contigId);

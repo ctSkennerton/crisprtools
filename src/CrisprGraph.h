@@ -84,7 +84,14 @@ namespace crispr {
         {
             return agsafeset(node, attrName, attrValue, "");
         }  
-        
+        inline int setGraphAttribute(char * attrName, char * attrValue)
+        {
+            return agsafeset(G_graph, attrName, attrValue, "");
+        }
+        inline int setEdgeAttribute(Agedge_t * edge ,char * attrName, char * attrValue)
+        {
+            return agsafeset(edge, attrName, attrValue, "");
+        }
         inline int setNodeAttribute(char * nodeName ,char * attrName, char * attrValue)
         {
             Agnode_t * node = agfindnode(G_graph, nodeName);
