@@ -27,7 +27,9 @@
 #include "ExtractTool.h"
 #include "FilterTool.h"
 #include "SanitiseTool.h"
-#include "DrawTool.h"
+#ifdef RENDERING
+    #include "DrawMain.h"
+#endif
 #include "StatTool.h"
 #include "config.h"
 void usage (void)
@@ -41,7 +43,9 @@ void usage (void)
 	std::cout<<"             extract     extract sequences in fasta"<<std::endl;
 	std::cout<<"             filter      make new files based on parameters"<<std::endl;
 	std::cout<<"             sanitise    change the IDs of elements"<<std::endl;
-	std::cout<<"             draw        create a rendered image of the CRISPR with Graphviz"<<std::endl;
+#ifdef RENDERING
+    std::cout<<"             draw        create a rendered image of the CRISPR with Graphviz"<<std::endl;
+#endif
 	std::cout<<"             stat        show statistics on some or all CRISPRs"<<std::endl;
 }
 
@@ -72,10 +76,12 @@ int main(int argc, char ** argv)
 	{
 		return sanitiseMain(argc - 1 , argv + 1);
 	}
+#ifdef RENDERING
 	else if(!strcmp(argv[1], "draw"))
 	{
 		return drawMain(argc - 1, argv + 1);
 	}
+#endif
 	else if(!strcmp(argv[1], "stat"))
 	{
 		return statMain(argc - 1, argv + 1);

@@ -27,8 +27,6 @@ crisprtools_SOURCES = \
 	ExtractTool.h \
 	SanitiseTool.cpp \
 	SanitiseTool.h \
-	DrawTool.cpp \
-	DrawTool.h \
 	StatTool.cpp \
 	StatTool.h \
 	CrassXML.h \
@@ -37,11 +35,15 @@ crisprtools_SOURCES = \
 	CrisprException.cpp \
     Utils.cpp \
     Utils.h \
-    CrisprGraph.cpp \
-    CrisprGraph.h \
     Rainbow.cpp \
     Rainbow.h
 
+if FOUND_GRAPHVIZ_LIBRARIES
+crisprtools_SOURCES += DrawTool.cpp \
+DrawTool.h \
+CrisprGraph.cpp \
+CrisprGraph.h 
+endif
 
 crisprtools_LDFLAGS = 
 

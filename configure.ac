@@ -37,8 +37,22 @@ AC_ARG_ENABLE([rendering],
         *) AC_MSG_ERROR([bad value ${enableval} for --enable-rendering]) ;;
     esac],[rendering=false])
 
+
+AC_PROG_CXX
+
+AX_LIB_XERCES
+if test $HAVE_XERCES = no; then
+AC_MSG_ERROR([Cannot find Xerces-c])
+else
+AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
+fi
+
+CAN_DRAW=no
 #check that graphviz is installed before defining RENDERING
 if test x$rendering = xtrue; then
+    AC_CHECK_LIB([gvc],[gvContext])
+    AC_CHECK_LIB([cdt],[dtopen])
+    AC_CHECK_LIB([graph],[agnode])
     AC_CHECK_PROGS([GV_PROGS], [neato fdp sfdp dot circo twopi], [no])
     if test x$GV_PROGS != xno; then
         AC_DEFINE([RENDERING],[1],[Defines to 1 if image rendering is to be performed])
@@ -53,19 +67,7 @@ if test x$rendering = xtrue; then
     fi
 fi
 
-AC_PROG_CXX
-
-AX_LIB_XERCES
-if test $HAVE_XERCES = no; then
-AC_MSG_ERROR([Cannot find Xerces-c])
-else
-AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
-fi
-
-AC_CHECK_LIB([gvc],[gvContext])
-AC_CHECK_LIB([cdt],[dtopen])
-AC_CHECK_LIB([graph],[agnode])
-
+AM_CONDITIONAL([FOUND_GRAPHVIZ_LIBRARIES],[test x$CAN_DRAW != xno])
 
 
 AC_CHECK_HEADERS([getopt.h stdlib.h])

@@ -27,6 +27,7 @@
 #include <vector>
 #include <iterator>
 #include <numeric>
+#include <iostream>
 
 
 
@@ -124,5 +125,33 @@ void split(const std::string& str, ContainerT& tokens, const std::string& delimi
     }
 }
 
+// class T1 is the container that holds the numbers and class T2 is the return type like int or double
+template <class T1 >
+typename T1::value_type mean(T1& container) {
+    
+   return (std::accumulate(container.begin(), container.end(), static_cast<typename T1::value_type>(0))/static_cast<typename T1::value_type>(container.size()));
+}
+
+template <class T1>
+typename T1::value_type median(T1& container) {
+    std::nth_element(container.begin(), container.begin()+container.size()/2, container.end());
+    return *(container.begin()+container.size()/2);
+}
+
+template <class T1>
+double percentile(T1& container, double percentile) {
+    std::nth_element(container.begin(), container.begin()+container.size()*percentile, container.end());
+    return static_cast<double>(*(container.begin()+container.size()*percentile));
+}
+
+template <class T1>
+typename T1::value_type mode(T1& container) {
+    std::vector<typename T1::value_type> histogram(container.size(),0);
+    typename T1::iterator iter = container.begin();
+    while (iter != container.end()) {
+        histogram[*iter++]++;
+    }
+    return std::max_element(histogram.begin(), histogram.end()) - histogram.begin();
+}
 
 #endif

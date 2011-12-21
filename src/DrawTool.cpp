@@ -19,8 +19,11 @@
 #include "CrisprException.h"
 #include "CrisprGraph.h"
 #include "Utils.h"
+#include "config.h"
+#include "DrawMain.h"
 #include <string.h>
 #include <graphviz/gvc.h>
+#include <sys/stat.h>
 
 
 DrawTool::~DrawTool()
@@ -38,38 +41,107 @@ DrawTool::~DrawTool()
 
 int DrawTool::processOptions (int argc, char ** argv)
 {
-	int c;
-
-	while((c = getopt(argc, argv, "hg:sdfxyo:")) != -1)
-	{
-        switch(c)
-		{
-			case 'h':
-			{
-				drawUsage ();
-				exit(1);
-				break;
-			}
-			case 'g':
-			{
-				generateGroupsFromString (optarg);
-				break;
-			}
-
-            case 'o':
+	try {
+        int c;
+        
+        while((c = getopt(argc, argv, "hg:c:a:f:o:b:")) != -1)
+        {
+            switch(c)
             {
-                DT_OutputFile = optarg;
-                break;
+                case 'h':
+                {
+                    drawUsage ();
+                    exit(1);
+                    break;
+                }
+                case 'g':
+                {
+                    generateGroupsFromString (optarg);
+                    break;
+                }
+                    
+                case 'o':
+                {
+                    DT_OutputFile = optarg;
+                    if (DT_OutputFile[DT_OutputFile.length() - 1] != '/')
+                    {
+                        DT_OutputFile += '/';
+                    }
+                    
+                    // check if our output folder exists
+                    struct stat file_stats;
+                    if (0 != stat(DT_OutputFile.c_str(),&file_stats)) 
+                    {
+                        recursiveMkdir(DT_OutputFile);
+                    }
+                    break;
+                }
+                case 'c':
+                {
+                    if (!strcmp(optarg, "red-blue") ) {
+                        DT_ColourType = RED_BLUE;
+                    } else if (!strcmp(optarg, "red-blue-green")) {
+                        DT_ColourType = RED_BLUE_GREEN;
+                    } else if (!strcmp(optarg, "blue-red")) {
+                        DT_ColourType = BLUE_RED;
+                    } else if (!strcmp(optarg, "green-blue-red")) {
+                        DT_ColourType = GREEN_BLUE_RED;
+                    } else {
+                        throw crispr::input_exception("Not a known color type");
+                    }
+                    break;
+                } 
+                case 'f':
+                {
+                    DT_OutputFormat = optarg;
+                    break;
+                }
+                case 'a':
+                {
+                    if (!strcmp(optarg, "dot") || 
+                        !strcmp(optarg, "neato") || 
+                        !strcmp(optarg, "fdp") || 
+                        !strcmp(optarg, "sfdp") ||
+                        !strcmp(optarg, "twopi") || 
+                        !strcmp(optarg, "circo")) {
+                        DT_RenderingAlgorithm = optarg;       
+                    } else {
+                        throw crispr::input_exception("Not a known Graphviz rendering algorithm");
+                    }
+                    break;
+                }
+                case 'b':
+                {
+                    int i;
+                    if (from_string<int>(i, optarg, std::dec)) {
+                        if (i > 0) {
+                            DT_Bins = i;
+                        } else {
+                            throw crispr::input_exception("The number of bins of colour must be greater than 0");
+                        }
+                    } else {
+                        throw crispr::runtime_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__,"could not convert string to int");
+                    }
+                    break;
+                }
+                default:
+                {
+                    drawUsage();
+                    exit(1);
+                    break;
+                }
             }
-            default:
-            {
-                drawUsage();
-                exit(1);
-                break;
-            }
-		}
-	}
-	return optind;
+        }
+
+    } catch (crispr::input_exception& e) {
+        std::cerr<<e.what()<<std::endl;
+        drawUsage();
+        exit(1);
+    } catch (crispr::runtime_exception& e) {
+        std::cerr<<e.what()<<std::endl;
+        exit(1);
+    }
+    return optind;
 }
 
 void DrawTool::generateGroupsFromString ( std::string str)
@@ -409,5 +481,18 @@ int drawMain (int argc, char ** argv)
 
 void drawUsage(void)
 {
-    std::cout<<""<<std::endl;
+    std::cout<<PACKAGE_NAME<<" draw [-ghyoaf] file.crispr"<<std::endl;
+	std::cout<<"Options:"<<std::endl;
+	std::cout<<"-h					print this handy help message"<<std::endl;
+    std::cout<<"-o DIR              output file directory  [default: .]" <<std::endl; 
+	std::cout<<"-g INT[,n]          a comma separated list of group IDs that you would like to extract data from."<<std::endl;
+	std::cout<<"					Note that only the group number is needed, do not use prefixes like 'Group' or 'G', which"<<std::endl;
+	std::cout<<"					are sometimes used in file names or in a .crispr file"<<std::endl;
+	std::cout<<"-a STRING           The Graphviz layout algorithm to use [default: dot ]"<<std::endl;
+    std::cout<<"-f STRING           The output format for the image, equivelent to the -T parameter of Graphviz executables [default: eps]"<<std::endl;
+    std::cout<<"-c COLOUR           The colour scale to use for coverage information.  The available choices are:"<<std::endl;
+    std::cout<<"                        red-blue"<<std::endl;
+    std::cout<<"                        blue-red"<<std::endl;
+    std::cout<<"                        red-blue-green"<<std::endl;
+    std::cout<<"                        green-blue-red"<<std::endl;
 }
