@@ -36,7 +36,9 @@ crisprtools_SOURCES = \
     Utils.cpp \
     Utils.h \
     Rainbow.cpp \
-    Rainbow.h
+    Rainbow.h \
+    RemoveTool.h \
+    RemoveTool.cpp
 
 if FOUND_GRAPHVIZ_LIBRARIES
 crisprtools_SOURCES += DrawTool.cpp \

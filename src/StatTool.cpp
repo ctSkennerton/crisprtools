@@ -419,4 +419,5 @@ void statUsage(void)
     std::cout<<PACKAGE_NAME<<" stat [-gh] file.crispr"<<std::endl;
 	std::cout<<"Options:"<<std::endl;
     std::cout<<"-h					print this handy help message"<<std::endl;
-	std::cout<<"-g INT[,n]          a comma separated list of group IDs that you would like to see stats for."<<std::endl;}
+	std::cout<<"-g INT[,n]          a comma separated list of group IDs that you would like to see stats for."<<std::endl;
+}

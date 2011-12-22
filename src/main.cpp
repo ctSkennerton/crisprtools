@@ -31,6 +31,7 @@
     #include "DrawMain.h"
 #endif
 #include "StatTool.h"
+#include "RemoveTool.h"
 #include "config.h"
 void usage (void)
 {
@@ -47,6 +48,7 @@ void usage (void)
     std::cout<<"             draw        create a rendered image of the CRISPR with Graphviz"<<std::endl;
 #endif
 	std::cout<<"             stat        show statistics on some or all CRISPRs"<<std::endl;
+    std::cout<<"             rm          remove a group from a .crispr file"<<std::endl;
 }
 
 int main(int argc, char ** argv)
@@ -56,36 +58,16 @@ int main(int argc, char ** argv)
 		usage();
 		return 1;
 	}
-	else if(!strcmp(argv[1], "merge"))
-	{
-		return mergeMain(argc -1 , argv + 1);
-	}
-	else if(!strcmp(argv[1], "split"))
-	{
-		return splitMain(argc - 1, argv + 1);
-	}
-	else if(!strcmp(argv[1], "extract"))
-	{
-		return extractMain(argc - 1 , argv + 1);
-	}
-	else if(!strcmp(argv[1],"filter"))
-	{
-		return filterMain(argc - 1, argv + 1);
-	}
-	else if(!strcmp(argv[1], "sanitise"))
-	{
-		return sanitiseMain(argc - 1 , argv + 1);
-	}
+	else if(!strcmp(argv[1], "merge")) return mergeMain(argc -1 , argv + 1);
+    else if(!strcmp(argv[1], "split")) return splitMain(argc - 1, argv + 1);
+	else if(!strcmp(argv[1], "extract")) return extractMain(argc - 1 , argv + 1);
+	else if(!strcmp(argv[1],"filter")) return filterMain(argc - 1, argv + 1);
+	else if(!strcmp(argv[1], "sanitise")) return sanitiseMain(argc - 1 , argv + 1);
 #ifdef RENDERING
-	else if(!strcmp(argv[1], "draw"))
-	{
-		return drawMain(argc - 1, argv + 1);
-	}
+	else if(!strcmp(argv[1], "draw")) return drawMain(argc - 1, argv + 1);
 #endif
-	else if(!strcmp(argv[1], "stat"))
-	{
-		return statMain(argc - 1, argv + 1);
-	}
+	else if(!strcmp(argv[1], "stat")) return statMain(argc - 1, argv + 1);
+	else if (!strcmp(argv[1], "rm")) return removeMain(argc -1 , argv + 1);
 	else
 	{
 		std::cerr<<"Unknown option: "<<argv[1]<<std::endl;
