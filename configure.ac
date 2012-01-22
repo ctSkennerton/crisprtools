@@ -1,11 +1,17 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl Created by Anjuta application wizard.
 
 AC_INIT(crisprtools, 0.0.1)
 
 AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE([1.10])
+AC_CONFIG_AUX_DIR(build)
+AC_CONFIG_MACRO_DIR(m4)
+AM_INIT_AUTOMAKE([foreign])
+
+AC_CONFIG_SRCDIR([src/main.cpp])
+
+LT_INIT
+LT_LANG([C++])
 
 # extra configure options
 #
@@ -27,53 +33,45 @@ if test x$debug = xtrue; then
     AC_DEFINE([DEBUG],[1],[define to 1 for debug statments])
 fi
 
-# enable rendering of images with graphviz 
-AC_ARG_ENABLE([rendering],
-    [AS_HELP_STRING([--enable-rendering],
-    [Enables images being drawn in the output files])],
-    [case "${enableval}" in
-        yes) rendering=true ;;
-        no)  rendering=false ;;
-        *) AC_MSG_ERROR([bad value ${enableval} for --enable-rendering]) ;;
-    esac],[rendering=false])
+
 
 
 AC_PROG_CXX
 
 AX_LIB_XERCES
 if test $HAVE_XERCES = no; then
-AC_MSG_ERROR([Cannot find Xerces-c])
+    AC_MSG_ERROR([Cannot find Xerces-c])
 else
-AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
+    AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
 fi
 
-CAN_DRAW=no
+
+
+GV_LIBS=yes
 #check that graphviz is installed before defining RENDERING
-if test x$rendering = xtrue; then
-    AC_CHECK_LIB([gvc],[gvContext])
-    AC_CHECK_LIB([cdt],[dtopen])
-    AC_CHECK_LIB([graph],[agnode])
-    AC_CHECK_PROGS([GV_PROGS], [neato fdp sfdp dot circo twopi], [no])
-    if test x$GV_PROGS != xno; then
-        AC_DEFINE([RENDERING],[1],[Defines to 1 if image rendering is to be performed])
-        AC_DEFINE_UNQUOTED([DEFAULT_RENDERING_ALGORITHM],["${GV_PROGS}"],[Sets the Default Graphviz algorithm])
-    else
-        echo "*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*"
-        echo "None of the Graphviz executables could"
-        echo "be found in your PATH!"
-        echo "Your installation will not conatin"
-        echo "rendering options!"
-        echo "*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*"
-    fi
-fi
+AC_CHECK_LIB([gvc],[gvContext],,[$GV_LIBS=no])
+AC_CHECK_LIB([cdt],[dtopen],,[$GV_LIBS=no])
+AC_CHECK_LIB([graph],[agnode],,[$GV_LIBS=no])
 
-AM_CONDITIONAL([FOUND_GRAPHVIZ_LIBRARIES],[test x$CAN_DRAW != xno])
+# if we don't have the libraries then check for the executables
+GV_PROG=no
 
+#if test x$GV_LIBS = xno; then
+#    AC_CHECK_PROGS([GV_PROGS], [neato fdp sfdp dot circo twopi], [no])
+#    if test x$GV_PROGS != xno; then
+#        $GV_PROG=yes
+#        AC_DEFINE([GRAPHVIZ_EXECUTABLES_FOUND],[1],[Defines to 1 if image rendering is to be performed])
+#        AC_DEFINE_UNQUOTED([DEFAULT_RENDERING_ALGORITHM],["${GV_PROGS}"],[Sets the Default Graphviz algorithm])
+#    fi
+#fi
+
+AM_CONDITIONAL([FOUND_GRAPHVIZ_LIBRARIES],[test x$GV_LIBS = xyes])
+AM_CONDITIONAL([FOUND_GRAPHVIZ_EXECUTABLES],[test x$GV_PROG = xyes])
 
 AC_CHECK_HEADERS([getopt.h stdlib.h])
 
 # only perform the check if rendering
-if test x$rendering = xtrue; then
+if test x$GV_PROG = xyes; then
     # Checks for Graphviz program neato
     AC_CHECK_PROG([NEATO],[neato],[yes],[no])
     if test x$NEATO = xyes; then
@@ -120,4 +118,5 @@ fi
 AC_OUTPUT([
 Makefile
 src/Makefile
+src/libcrispr/Makefile
 ])

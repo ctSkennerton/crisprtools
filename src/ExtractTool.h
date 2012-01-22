@@ -23,7 +23,7 @@
 #include <set>
 #include <iostream>
 #include <fstream>
-#include "CrassXML.h"
+#include "XML.h"
 
 class ExtractTool 
 {

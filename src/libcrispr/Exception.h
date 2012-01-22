@@ -17,8 +17,8 @@ crisprtools is free software: you can redistribute it and/or modify it
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _CRISPREXCEPTION_H_
-#define _CRISPREXCEPTION_H_
+#ifndef _EXCEPTION_H_
+#define _EXCEPTION_H_
 
 #include <exception>
 #include <string>

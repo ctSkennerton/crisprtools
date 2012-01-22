@@ -23,7 +23,7 @@
 #include <vector>
 #include <string>
 #include <set>
-#include "CrassXML.h"
+#include "XML.h"
 #include "StlExt.h"
 
 
@@ -77,21 +77,21 @@ public:
     inline void setRepeatCount(int i) { SM_RepeatCount = i;}
     inline void setFlankerCount(int i) { SM_FlankerCount = i;}
     
-    //int mode(std::vector<int>& v);
+    // mode
     
     inline int modeSpacerL(void){return mode(SM_SpacerLength);}
     inline int modeSpacerC(void){return mode(SM_SpacerCoverage);}
     inline int modeRepeatL(void){return mode(SM_RepeatLength);}
     inline int modeFlankerL(void){return mode(SM_FlankerLength);}
     
-    //int median(std::vector<int>& v);
+    // median;
     
     inline int medianSpacerL(void){return median(SM_SpacerLength);}
     inline int medianSpacerC(void){return median(SM_SpacerCoverage);}
     inline int medianRepeatL(void){return median(SM_RepeatLength);}
     inline int medianFlankerL(void){return median(SM_FlankerLength);}
     
-    //int mean(std::vector<int>& v);
+    // mean
     
     inline int meanSpacerL(void) {return mean(SM_SpacerLength);}
     inline int meanSpacerC(void) {return mean(SM_SpacerCoverage);}
@@ -142,7 +142,7 @@ public:
 //    void parseLinkSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
 //    void parseLinkFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
     void prettyPrint(StatManager * sm);
-    
+    void printTabular(StatManager * sm);
     std::vector<StatManager *>::iterator begin(){return ST_StatsVec.begin();}
     std::vector<StatManager *>::iterator end(){return ST_StatsVec.end();}
 

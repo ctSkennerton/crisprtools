@@ -17,8 +17,10 @@
 #include "ExtractTool.h"
 #include "Utils.h"
 #include "config.h"
-#include "CrisprException.h"
-#include "CrassXML.h"
+#include "Exception.h"
+#include "XML.h"
+
+#include "StlExt.h"
 #include <getopt.h>
 #include <string>
 #include <iostream>
@@ -192,45 +194,16 @@ void ExtractTool::parseWantedGroups(CrassXML& xmlObj, xercesc::DOMElement * root
     
     try {
         
-        // get the children
-        xercesc::DOMNodeList * children = rootElement->getChildNodes();
-        const  XMLSize_t nodeCount = children->getLength();
-        
-        // For all nodes, children of "root" in the XML tree.
-        for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-            xercesc::DOMNode * currentNode = children->item(xx);
-            if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-                // Found node which is an Element. Re-cast node as element
-                xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-
-                // is this a group element
-                if (xercesc::XMLString::equals(currentElement->getTagName(), xmlObj.getGroup())) {
-                    // new group
-                    std::string group_id = xmlObj.XMLCH_2_STR(currentElement->getAttribute(xmlObj.getGid()));
-                    if (ET_Subset) {
-                        
-                        // we only want some of the groups look at ET_Groups
-                        if (ET_Group.find(group_id.substr(1)) != ET_Group.end() ) {
-                            if (ET_SplitGroup) {
-                                if (!ET_SplitType) {
-                                    ET_GroupStream.open((ET_OutputPrefix + group_id + "_extracted_data.fa").c_str());
-                                } else {
-                                    if (ET_Spacer) {
-                                        ET_SpacerStream.open((ET_OutputPrefix + group_id + "_spacers.fa").c_str());
-                                    }
-                                    if (ET_DirectRepeat) {
-                                        ET_RepeatStream.open((ET_OutputPrefix + group_id + "_direct_repeats.fa").c_str());
-                                    }
-                                    if (ET_Flanker) {
-                                        ET_FlankerStream.open((ET_OutputPrefix + group_id + "_flankers.fa").c_str());
-                                    }
-                                }
-                            }
-                            
-                            // matches to one of our wanted groups
-                            extractDataFromGroup(xmlObj, currentElement);
-                        } 
-                    } else {
+        for (xercesc::DOMElement * currentElement = rootElement->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+            // is this a group element
+            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlObj.getGroup())) {
+                // new group
+                char * c_group_id = tc(currentElement->getAttribute(xmlObj.getGid()));
+                std::string group_id = c_group_id;
+                if (ET_Subset) {
+                    
+                    // we only want some of the groups look at ET_Groups
+                    if (ET_Group.find(group_id.substr(1)) != ET_Group.end() ) {
                         if (ET_SplitGroup) {
                             if (!ET_SplitType) {
                                 ET_GroupStream.open((ET_OutputPrefix + group_id + "_extracted_data.fa").c_str());
@@ -246,29 +219,50 @@ void ExtractTool::parseWantedGroups(CrassXML& xmlObj, xercesc::DOMElement * root
                                 }
                             }
                         }
-
-                        extractDataFromGroup(xmlObj, currentElement);
                         
-                        if(ET_SplitGroup) {
-                            // we are only spliting on type make three generic files
-                            if (ET_SplitType) {
-                                if (ET_Spacer) {
-                                    ET_SpacerStream.close();
-                                }
-                                if (ET_DirectRepeat) {
-                                    ET_RepeatStream.close();
-                                }
-                                if (ET_Flanker) {
-                                    ET_FlankerStream.close();
-                                }
-                            } else {
-                                ET_GroupStream.close();
+                        // matches to one of our wanted groups
+                        extractDataFromGroup(xmlObj, currentElement);
+                    } 
+                    xr(&c_group_id);
+                } else {
+                    if (ET_SplitGroup) {
+                        if (!ET_SplitType) {
+                            ET_GroupStream.open((ET_OutputPrefix + group_id + "_extracted_data.fa").c_str());
+                        } else {
+                            if (ET_Spacer) {
+                                ET_SpacerStream.open((ET_OutputPrefix + group_id + "_spacers.fa").c_str());
                             }
-
+                            if (ET_DirectRepeat) {
+                                ET_RepeatStream.open((ET_OutputPrefix + group_id + "_direct_repeats.fa").c_str());
+                            }
+                            if (ET_Flanker) {
+                                ET_FlankerStream.open((ET_OutputPrefix + group_id + "_flankers.fa").c_str());
+                            }
                         }
+                    }
+
+                    extractDataFromGroup(xmlObj, currentElement);
+                    
+                    if(ET_SplitGroup) {
+                        // we are only spliting on type make three generic files
+                        if (ET_SplitType) {
+                            if (ET_Spacer) {
+                                ET_SpacerStream.close();
+                            }
+                            if (ET_DirectRepeat) {
+                                ET_RepeatStream.close();
+                            }
+                            if (ET_Flanker) {
+                                ET_FlankerStream.close();
+                            }
+                        } else {
+                            ET_GroupStream.close();
+                        }
+
                     }
                 }
             }
+            
         }
         
     } catch( xercesc::XMLException& e ) {
@@ -288,55 +282,45 @@ void ExtractTool::extractDataFromGroup(CrassXML& xmlDoc, xercesc::DOMElement * c
 {
     // get the first child - the data element
     try {
-        // the first element of a <group> is a <data>
-        xercesc::DOMElement * data = currentGroup->getFirstElementChild();
-        // get the children
-        xercesc::DOMNodeList * children = data->getChildNodes();
-        const  XMLSize_t nodeCount = children->getLength();
-        
-        // For all nodes, children of "root" in the XML tree.
-        for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-            xercesc::DOMNode * currentNode = children->item(xx);
-            if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-                // Found node which is an Element. Re-cast node as element
-                xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-
-                if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getDrs())) {
-                    if (ET_DirectRepeat) {
-                        // get direct repeats
-                        if (ET_SplitType) {
-                            processData(xmlDoc, currentElement, REPEAT, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_RepeatStream);
-                        } else if (ET_SplitGroup) {
-                            processData(xmlDoc, currentElement, REPEAT, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_GroupStream);   
-                        } else {
-                            processData(xmlDoc, currentElement, REPEAT, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_OneStream);   
-                        }
+        for (xercesc::DOMElement * currentElement = currentGroup->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+            char * c_gid = tc(currentGroup->getAttribute(xmlDoc.getGid()));
+            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getDrs())) {
+                if (ET_DirectRepeat) {
+                    // get direct repeats
+                    if (ET_SplitType) {
+                        processData(xmlDoc, currentElement, REPEAT, c_gid, ET_RepeatStream);
+                    } else if (ET_SplitGroup) {
+                        processData(xmlDoc, currentElement, REPEAT, c_gid, ET_GroupStream);   
+                    } else {
+                        processData(xmlDoc, currentElement, REPEAT, c_gid, ET_OneStream);   
                     }
-                } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getSpacers())) {
-                    if (ET_Spacer) {
-                        // get spacers
-                        if (ET_SplitType) {
-                            processData(xmlDoc, currentElement, SPACER, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_SpacerStream);
-                        } else if (ET_SplitGroup) {
-                            processData(xmlDoc, currentElement, SPACER, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_GroupStream);   
-                        } else {
-                            processData(xmlDoc, currentElement, SPACER, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_OneStream);
-                        }
+                }
+            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getSpacers())) {
+                if (ET_Spacer) {
+                    // get spacers
+                    if (ET_SplitType) {
+                        processData(xmlDoc, currentElement, SPACER, c_gid, ET_SpacerStream);
+                    } else if (ET_SplitGroup) {
+                        processData(xmlDoc, currentElement, SPACER, c_gid, ET_GroupStream);   
+                    } else {
+                        processData(xmlDoc, currentElement, SPACER, c_gid, ET_OneStream);
                     }
-                } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getFflankers())) {
-                    if (ET_Flanker) {
-                        // get flankers
-                        if (ET_SplitType) {
-                            processData(xmlDoc, currentElement, FLANKER, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_FlankerStream);
-                        } else if (ET_SplitGroup) {
-                            processData(xmlDoc, currentElement, FLANKER, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_GroupStream);
-                        } else {
-                            processData(xmlDoc, currentElement, FLANKER, xmlDoc.XMLCH_2_STR(currentGroup->getAttribute(xmlDoc.getGid())), ET_OneStream);
+                }
+            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getFflankers())) {
+                if (ET_Flanker) {
+                    // get flankers
+                    if (ET_SplitType) {
+                        processData(xmlDoc, currentElement, FLANKER, c_gid, ET_FlankerStream);
+                    } else if (ET_SplitGroup) {
+                        processData(xmlDoc, currentElement, FLANKER, c_gid, ET_GroupStream);
+                    } else {
+                        processData(xmlDoc, currentElement, FLANKER, c_gid, ET_OneStream);
 
-                        }
                     }
                 }
             }
+            xr(&c_gid);
+            
         }
     } catch( xercesc::XMLException& e ) {
         char* message = xercesc::XMLString::transcode( e.getMessage() );
@@ -352,54 +336,53 @@ void ExtractTool::extractDataFromGroup(CrassXML& xmlDoc, xercesc::DOMElement * c
 void ExtractTool::processData(CrassXML& xmlDoc, xercesc::DOMElement * currentType, ELEMENT_TYPE wantedType, std::string gid, std::ostream& outStream)
 {
     try {
-        
-        // get the children
-        xercesc::DOMNodeList * children = currentType->getChildNodes();
-        const  XMLSize_t nodeCount = children->getLength();
-        
-        for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
+        for (xercesc::DOMElement * currentElement = currentType->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
             
-            xercesc::DOMNode * currentNode = children->item(xx);
+            char * c_seq = tc(currentElement->getAttribute(xmlDoc.getSeq()));
+            std::string id;
             
-            if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-                
-                // Found node which is an Element. Re-cast node as element
-                xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-                std::string seq = xmlDoc.XMLCH_2_STR(currentElement->getAttribute(xmlDoc.getSeq()));
-                std::string id;
-                
-                switch (wantedType) {
-                    case REPEAT:
-                    {
-                        id = xmlDoc.XMLCH_2_STR(currentElement->getAttribute(xmlDoc.getDrid()));
-                        break;
-                    }
-                    case SPACER:
-                    {
-                        id = xmlDoc.XMLCH_2_STR(currentElement->getAttribute(xmlDoc.getSpid()));
-                        if (currentElement->hasAttribute(xmlDoc.getCov())) {
-                            id += "_Cov"; id += xmlDoc.XMLCH_2_STR(currentElement->getAttribute(xmlDoc.getCov()));
-                        }
-                        break;
-                    }
-                    case FLANKER:
-                    {
-                        id = xmlDoc.XMLCH_2_STR(currentElement->getAttribute(xmlDoc.getFlid()));
-                        break;
-                    }
-                    case CONSENSUS:
-                    {
-                        break;
-                    }
-                    default:
-                    {
-                        throw (crispr::runtime_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Input element enum unknown"));
-                        break;
-                    }
+            switch (wantedType) {
+                case REPEAT:
+                {
+                    char * c_id = tc(currentElement->getAttribute(xmlDoc.getDrid()));
+                    id = c_id;
+                    xr(&c_id);
+                    break;
                 }
-                
-                outStream<<'>'<<gid<<id<<std::endl<<seq<<std::endl;
+                case SPACER:
+                {
+                    char * c_id = tc(currentElement->getAttribute(xmlDoc.getSpid()));
+                    id = c_id;
+                    if (currentElement->hasAttribute(xmlDoc.getCov())) {
+                        char * c_cov = tc(currentElement->getAttribute(xmlDoc.getCov()));
+                        id += "_Cov_"; 
+                        id += c_cov;
+                        xr(&c_cov);
+                    }
+                    xr(&c_id);
+                    break;
+                }
+                case FLANKER:
+                {
+                    char * c_id = tc(currentElement->getAttribute(xmlDoc.getFlid()));
+                    id = c_id;
+                    xr(&c_id);
+                    break;
+                }
+                case CONSENSUS:
+                {
+                    break;
+                }
+                default:
+                {
+                    throw (crispr::runtime_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Input element enum unknown"));
+                    break;
+                }
             }
+            
+            outStream<<'>'<<gid<<id<<std::endl<<c_seq<<std::endl;
+            xr(&c_seq);
+            
         }
         
     } catch( xercesc::XMLException& e ) {

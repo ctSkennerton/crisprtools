@@ -126,32 +126,43 @@ void split(const std::string& str, ContainerT& tokens, const std::string& delimi
 }
 
 // class T1 is the container that holds the numbers and class T2 is the return type like int or double
-template <class T1 >
-typename T1::value_type mean(T1& container) {
-    
-   return (std::accumulate(container.begin(), container.end(), static_cast<typename T1::value_type>(0))/static_cast<typename T1::value_type>(container.size()));
+template <class T >
+typename T::value_type mean(T& container) {
+    return (std::accumulate(container.begin(), container.end(), static_cast<typename T::value_type>(0))/container.size());
 }
 
-template <class T1>
-typename T1::value_type median(T1& container) {
+template <class T>
+typename T::value_type median(T& container) {
     std::nth_element(container.begin(), container.begin()+container.size()/2, container.end());
     return *(container.begin()+container.size()/2);
 }
 
-template <class T1>
-double percentile(T1& container, double percentile) {
+template <class T>
+typename T::value_type percentile(T& container, double percentile) {
     std::nth_element(container.begin(), container.begin()+container.size()*percentile, container.end());
-    return static_cast<double>(*(container.begin()+container.size()*percentile));
+    return *(container.begin()+container.size()*percentile);
 }
 
-template <class T1>
-typename T1::value_type mode(T1& container) {
-    std::vector<typename T1::value_type> histogram(container.size(),0);
-    typename T1::iterator iter = container.begin();
+template <class T>
+typename T::value_type mode(T& container) {
+    std::vector<typename T::value_type> histogram(container.size(),0);
+    typename T::iterator iter = container.begin();
     while (iter != container.end()) {
         histogram[*iter++]++;
     }
     return std::max_element(histogram.begin(), histogram.end()) - histogram.begin();
+}
+
+template <class T>
+double standardDeviation(T& container) {
+    double average = static_cast<double>( mean(container));
+    std::vector<double> temp;
+    typename T::iterator iter;
+    for (iter = container.begin(); iter != container.end(); iter++) {
+        double i = static_cast<double>(*iter) - average;
+        temp.push_back(i*i);
+    }
+    return std::sqrt(std::accumulate(temp.begin(), temp.end(), static_cast<double>(0))/temp.size() );
 }
 
 #endif

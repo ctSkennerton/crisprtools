@@ -16,10 +16,11 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "MergeTool.h"
-#include "CrassXML.h"
-#include "CrisprException.h"
+#include "XML.h"
+#include "Exception.h"
 #include "config.h"
 #include <getopt.h>
+#include <sstream>
 
 int MergeTool::processOptions (int argc, char ** argv)
 {
@@ -90,42 +91,36 @@ int mergeMain (int argc, char ** argv)
                     if( !elementRoot ) throw(crispr::xml_exception( __FILE__,__LINE__,__PRETTY_FUNCTION__,"empty XML document" ));
                     
                     // get the children
-                    xercesc::DOMNodeList * children = elementRoot->getChildNodes();
-                    const  XMLSize_t nodeCount = children->getLength();
-                    
-                    // For all nodes, children of "root" in the XML tree.
-                    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-                        xercesc::DOMNode * currentNode = children->item(xx);
-                        if( currentNode->getNodeType() && currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-                            // Found node which is an Element. Re-cast node as element
-                            xercesc::DOMElement * currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-                            if( xercesc::XMLString::equals(currentElement->getTagName(), input_file.getGroup())) {
+                    for (xercesc::DOMElement * currentElement = elementRoot->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+                        if( xercesc::XMLString::equals(currentElement->getTagName(), input_file.getGroup())) {
+                            
+                            if (mt.getSanitise()) {
+                                // change the name 
+                                std::stringstream ss;
+                                ss <<'G'<< mt.getNextGroupID();
+                                XMLCh * x_group = tc(ss.str().c_str());
+                                currentElement->setAttribute(master_DOM.getGid(), x_group);
+                                mt.incrementGroupID();
+                                xr(&x_group);
+                            
+                            } else {
+                                // check if we already seen it if so warn the user
+                                char * gid = tc(currentElement->getAttribute(master_DOM.getGid()));
                                 
-                                if (mt.getSanitise()) {
-                                    // change the name 
-                                    std::stringstream ss;
-                                    ss <<'G'<< mt.getNextGroupID();
-                                    currentElement->setAttribute(master_DOM.STR_2_XMLCH("gid"), master_DOM.STR_2_XMLCH(ss.str()));
-                                    mt.incrementGroupID();
-                                
-                                } else {
-                                    // check if we already seen it if so warn the user
-                                    std::string gid = master_DOM.XMLCH_2_STR(currentElement->getAttribute(master_DOM.getGid()));
-                                    std::cout<<gid<<std::endl;
+                                if ( mt.find(gid) != mt.end()) {
+                                    // this group id has been seen before
+                                    std::cout<<"Group IDs in the two files conflict "<<gid<<" seen more than once."<<std::endl;
+                                    std::cout<<"Try using -s to avoid this or use "<<PACKAGE_NAME<<" sanitise to fix these conflicts"<<std::endl;
                                     
-                                    if ( mt.find(gid) != mt.end()) {
-                                        // this group id has been seen before
-                                        std::cout<<"Group IDs in the two files conflict "<<gid<<" seen more than once."<<std::endl;
-                                        std::cout<<"Try using -s to avoid this or use "<<PACKAGE_NAME<<" sanitise to fix these conflicts"<<std::endl;
-                                        
-                                    } else {
-                                        // add in to the set
-                                        mt.insert(gid);
-                                    }
+                                } else {
+                                    // add in to the set
+                                    mt.insert(gid);
                                 }
-                                master_root_elem->appendChild(master_doc->importNode(currentNode, true));
                             }
+                            master_root_elem->appendChild(master_doc->importNode(currentElement, true));
                         }
+                        
                     }
                     opt_index++;
                 }   

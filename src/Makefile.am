@@ -1,6 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
-## Created by Anjuta
+SUBDIRS = libcrispr
+INCLUDES = \
+	-I$(top_srcdir)/src/libcrispr
 
 AM_LDFLAGS = @XERCES_LDFLAGS@
 if XERCES_FOUND
@@ -14,6 +16,7 @@ AM_CFLAGS =\
 
 bin_PROGRAMS = crisprtools
 
+crisprtools_LDADD = $(top_builddir)/src/libcrispr/libcrispr.la
 crisprtools_SOURCES = \
 	main.cpp \
 	StlExt.h \
@@ -29,25 +32,19 @@ crisprtools_SOURCES = \
 	SanitiseTool.h \
 	StatTool.cpp \
 	StatTool.h \
-	CrassXML.h \
-	CrassXML.cpp \
-	CrisprException.h \
-	CrisprException.cpp \
     Utils.cpp \
     Utils.h \
     Rainbow.cpp \
     Rainbow.h \
     RemoveTool.h \
-    RemoveTool.cpp
-
+    RemoveTool.cpp 
+    
 if FOUND_GRAPHVIZ_LIBRARIES
-crisprtools_SOURCES += DrawTool.cpp \
-DrawTool.h \
-CrisprGraph.cpp \
-CrisprGraph.h 
+crisprtools_SOURCES += DrawTool.cpp DrawTool.h CrisprGraph.cpp CrisprGraph.h
 endif
 
-crisprtools_LDFLAGS = 
+if FOUND_GRAPHVIZ_EXECUTABLES
+crisprtools_SOURCES += DrawTool.cpp DrawTool.h GraphDrawingDefines.h
+endif
 
-crisprtools_LDADD =  
 

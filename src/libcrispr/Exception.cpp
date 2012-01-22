@@ -17,7 +17,7 @@ crisprtools is free software: you can redistribute it and/or modify it
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "CrisprException.h"
+#include "Exception.h"
 #include <sstream>
 namespace crispr {
     exception::exception (const char * file, int line, const char * function ,const char * message)

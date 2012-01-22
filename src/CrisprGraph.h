@@ -100,7 +100,6 @@ namespace crispr {
             } else {
                 return 1;
             }
-
         }
 
     };

@@ -21,7 +21,7 @@
 #include <map>
 #include <sstream>
 
-#include "CrassXML.h"
+#include "XML.h"
 
 typedef std::map<std::string, std::string> conversionMap;
 

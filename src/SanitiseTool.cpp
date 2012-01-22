@@ -16,9 +16,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "SanitiseTool.h"
-#include "CrisprException.h"
+#include "Exception.h"
 #include "config.h"
-#include "CrassXML.h"
+#include "XML.h"
 
 #include <iostream>
 int SanitiseTool::processOptions (int argc, char ** argv)
@@ -87,28 +87,22 @@ int SanitiseTool::processInputFile(const char * inputFile)
         }
         
         
-        // get the children
-        xercesc::DOMNodeList * children = root_elem->getChildNodes();
-        const  XMLSize_t nodeCount = children->getLength();
-        
-        // For all nodes, children of "root" in the XML tree.
-        for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-            xercesc::DOMNode * currentNode = children->item(xx);
-            if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-                // Found node which is an Element. Re-cast node as element
-                xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
+        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
                 
                 // is this a group element
                 if (xercesc::XMLString::equals(currentElement->getTagName(), xml_parser.getGroup())) {
-                    currentElement->setAttribute(xml_parser.STR_2_XMLCH("gid"), xml_parser.STR_2_XMLCH(getNextGroupS()));
-                    incrementGroup();
                     
+                    XMLCh * x_next_group_num = tc( getNextGroupS().c_str());
+                    currentElement->setAttribute(xml_parser.getGid(), x_next_group_num);
+                    incrementGroup();
+                    xr(&x_next_group_num);
                     // the user wants to change any of these 
                     if (ST_Spacers || ST_Repeats || ST_Flank || ST_contigs) {
                         parseGroup(currentElement, xml_parser);
                     }
                 }
-            }
+            
             setNextRepeat(1);
             setNextContig(1);
             setNextRepeat(1);
@@ -124,198 +118,148 @@ int SanitiseTool::processInputFile(const char * inputFile)
 }
 void SanitiseTool::parseGroup(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getData())) {
-                if (ST_Spacers || ST_Repeats || ST_Flank) {
-                    parseData(currentElement, xmlParser);
-                }
-                
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getAssembly())) {
-                if (ST_contigs || ST_Spacers || ST_Repeats || ST_Flank) {
-                    parseAssembly(currentElement, xmlParser);
-                }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getData())) {
+            if (ST_Spacers || ST_Repeats || ST_Flank) {
+                parseData(currentElement, xmlParser);
             }
-
-
+            
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getAssembly())) {
+            if (ST_contigs || ST_Spacers || ST_Repeats || ST_Flank) {
+                parseAssembly(currentElement, xmlParser);
+            }
         }
     }
-    
-            
-
 }
 
 void SanitiseTool::parseData(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDrs())) {
-                if (ST_Repeats) {
-                    // change the direct repeats
-                    parseDrs(currentElement, xmlParser);
-                }
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacers())) {
-                if (ST_Spacers) {
-                    // change the spacers
-                    parseSpacers(currentElement, xmlParser);
-                }
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFlankers())) {
-                if (ST_Flank) {
-                    // change the flankers
-                    parseFlankers(currentElement, xmlParser);
-                }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDrs())) {
+            if (ST_Repeats) {
+                // change the direct repeats
+                parseDrs(currentElement, xmlParser);
+            }
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacers())) {
+            if (ST_Spacers) {
+                // change the spacers
+                parseSpacers(currentElement, xmlParser);
+            }
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFlankers())) {
+            if (ST_Flank) {
+                // change the flankers
+                parseFlankers(currentElement, xmlParser);
             }
         }
     }
 }
 void SanitiseTool::parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDr())) {
-                ST_RepeatMap[xmlParser.XMLCH_2_STR(currentElement->getAttribute(xmlParser.getDrid()))] = getNextRepeatS();
-                currentElement->setAttribute(xmlParser.getDrid(), xmlParser.STR_2_XMLCH(getNextRepeatS()));
-                incrementRepeat();
-            }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDr())) {
+            char * c_drid = tc(currentElement->getAttribute(xmlParser.getDrid()));
+            std::string drid = c_drid;
+            ST_RepeatMap[drid] = getNextRepeatS();
+            xr(&c_drid);
+            XMLCh * x_next_repeat_num = tc(getNextRepeatS().c_str());
+            currentElement->setAttribute(xmlParser.getDrid(), x_next_repeat_num);
+            xr(&x_next_repeat_num);
+            incrementRepeat();
         }
+        
     }
 }
 void SanitiseTool::parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacer())) {
-                ST_SpacerMap[xmlParser.XMLCH_2_STR(currentElement->getAttribute(xmlParser.getSpid()))] = getNextSpacerS();
-                currentElement->setAttribute(xmlParser.getSpid(), xmlParser.STR_2_XMLCH(getNextSpacerS()));
-                incrementSpacer();
-            }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacer())) {
+            char * c_spid = tc(currentElement->getAttribute(xmlParser.getSpid()));
+            std::string spid = c_spid;
+            ST_SpacerMap[spid] = getNextSpacerS();
+            xr(&c_spid);
+            XMLCh * x_next_spacer_num = tc(getNextSpacerS().c_str());
+            currentElement->setAttribute(xmlParser.getSpid(), x_next_spacer_num);
+            xr(&x_next_spacer_num);
+            incrementSpacer();
         }
     }
 }
 
 void SanitiseTool::parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacer())) {
-                ST_FlankMap[xmlParser.XMLCH_2_STR(currentElement->getAttribute(xmlParser.getFlid()))] = getNextFlankerS();
-                currentElement->setAttribute(xmlParser.getFlid(), xmlParser.STR_2_XMLCH(getNextFlankerS()));
-                incrementFlanker();
-            }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacer())) {
+            char * c_flid = tc(currentElement->getAttribute(xmlParser.getFlid()));
+            std::string flid = c_flid;
+            ST_FlankMap[flid] = getNextFlankerS();
+            xr(&c_flid);
+            XMLCh * x_next_flanker_num = tc(getNextFlankerS().c_str());
+            currentElement->setAttribute(xmlParser.getFlid(), x_next_flanker_num);
+            xr(&x_next_flanker_num);
+            incrementFlanker();
         }
+        
     }
 }
 
 void SanitiseTool::parseAssembly(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getContig())) {
-                currentElement->setAttribute(xmlParser.getCid(), xmlParser.STR_2_XMLCH(getNextContigS()));
-                incrementContig();
-                parseContig(currentElement, xmlParser);
-            }
-            
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getContig())) {
+            XMLCh * x_next_contig = tc(getNextContigS().c_str());
+            currentElement->setAttribute(xmlParser.getCid(), x_next_contig);
+            incrementContig();
+            xr(&x_next_contig);
+            parseContig(currentElement, xmlParser);
         }
     }
-
 }
 
 void SanitiseTool::parseContig(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getCspacer())) {
-                if (ST_Spacers) {
-                    std::string spid = xmlParser.XMLCH_2_STR( currentElement->getAttribute(xmlParser.getSpid()));
-                    currentElement->setAttribute(xmlParser.getSpid(), xmlParser.STR_2_XMLCH(ST_SpacerMap[spid]));
-                }
-                if (ST_Spacers || ST_Repeats || ST_Flank) {
-                    parseCSpacer(currentElement, xmlParser);
-                }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getCspacer())) {
+            if (ST_Spacers) {
+                char * c_spid = tc( currentElement->getAttribute(xmlParser.getSpid()));
+                std::string spid = c_spid;
+                XMLCh * x_new_spid = tc(ST_SpacerMap[spid].c_str());
+                currentElement->setAttribute(xmlParser.getSpid(), x_new_spid);
+                xr(&c_spid);
+                xr(&x_new_spid);
+            }
+            if (ST_Spacers || ST_Repeats || ST_Flank) {
+                parseCSpacer(currentElement, xmlParser);
             }
         }
     }
-
 }
 
 void SanitiseTool::parseCSpacer(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getBspacers())) {
-                if (ST_Spacers || ST_Repeats) {
-                    parseLinkSpacers(currentElement, xmlParser);
-                }
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFspacers())) {
-                if (ST_Spacers || ST_Repeats) {
-                    parseLinkSpacers(currentElement, xmlParser);
-                }
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getBflankers())) {
-                if (ST_Flank || ST_Repeats) {
-                    parseLinkFlankers(currentElement, xmlParser);
-                }
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFflankers())) {
-                if (ST_Flank || ST_Repeats) {
-                    parseLinkFlankers(currentElement, xmlParser);
-                }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getBspacers())) {
+            if (ST_Spacers || ST_Repeats) {
+                parseLinkSpacers(currentElement, xmlParser);
+            }
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFspacers())) {
+            if (ST_Spacers || ST_Repeats) {
+                parseLinkSpacers(currentElement, xmlParser);
+            }
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getBflankers())) {
+            if (ST_Flank || ST_Repeats) {
+                parseLinkFlankers(currentElement, xmlParser);
+            }
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFflankers())) {
+            if (ST_Flank || ST_Repeats) {
+                parseLinkFlankers(currentElement, xmlParser);
             }
         }
     }
@@ -323,48 +267,50 @@ void SanitiseTool::parseCSpacer(xercesc::DOMElement * parentNode, CrassXML& xmlP
 
 void SanitiseTool::parseLinkSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (ST_Spacers) {
-                std::string spid = xmlParser.XMLCH_2_STR( currentElement->getAttribute(xmlParser.getSpid()));
-                currentElement->setAttribute(xmlParser.getSpid(), xmlParser.STR_2_XMLCH( ST_SpacerMap[spid]));
-            }
-            if (ST_Repeats) {
-                std::string drid = xmlParser.XMLCH_2_STR( currentElement->getAttribute(xmlParser.getDrid()));
-                currentElement->setAttribute(xmlParser.getDrid(), xmlParser.STR_2_XMLCH( ST_RepeatMap[drid]));
-            }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (ST_Spacers) {
+            char * c_spid = tc(currentElement->getAttribute(xmlParser.getSpid()));
+            std::string spid = c_spid;
+            XMLCh * x_new_spid = tc( ST_SpacerMap[spid].c_str());
+            currentElement->setAttribute(xmlParser.getSpid(), x_new_spid);
+            xr(&c_spid);
+            xr(&x_new_spid);
         }
+        if (ST_Repeats) {
+            char * c_drid = tc( currentElement->getAttribute(xmlParser.getDrid()));
+            std::string drid = c_drid;
+            XMLCh * x_new_drid = tc(ST_RepeatMap[drid].c_str());
+            currentElement->setAttribute(xmlParser.getDrid(), x_new_drid);
+            xr(&c_drid);
+            xr(&x_new_drid);
+        }
+        
     }
 }
 
 void SanitiseTool::parseLinkFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (ST_Flank) {
-                std::string flid = xmlParser.XMLCH_2_STR( currentElement->getAttribute(xmlParser.getFlid()));
-                currentElement->setAttribute(xmlParser.getFlid(), xmlParser.STR_2_XMLCH( ST_FlankMap[flid]));
-            }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
-            if (ST_Repeats) {
-                std::string drid = xmlParser.XMLCH_2_STR( currentElement->getAttribute(xmlParser.getDrid()));
-                currentElement->setAttribute(xmlParser.getDrid(), xmlParser.STR_2_XMLCH( ST_RepeatMap[drid]));
-            }
+        if (ST_Flank) {
+            char * c_flid = tc( currentElement->getAttribute(xmlParser.getFlid()));
+            std::string flid = c_flid;
+            XMLCh * x_new_flid = tc( ST_FlankMap[flid].c_str());
+            currentElement->setAttribute(xmlParser.getFlid(), x_new_flid);
+            xr(&c_flid);
+            xr(&x_new_flid);
         }
+
+        if (ST_Repeats) {
+            char * c_drid = tc( currentElement->getAttribute(xmlParser.getDrid()));
+            std::string drid = c_drid;
+            XMLCh * x_new_drid = tc(ST_RepeatMap[drid].c_str());
+            currentElement->setAttribute(xmlParser.getDrid(), x_new_drid);
+            xr(&c_drid);
+            xr(&x_new_drid);
+        }
+        
     }
 }
 

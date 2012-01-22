@@ -49,8 +49,8 @@
 #include <errno.h>
 
 // local includes
-#include "CrassXML.h"
-#include "CrisprException.h"
+#include "XML.h"
+#include "Exception.h"
 
 using namespace xercesc;
 
@@ -82,7 +82,7 @@ CrassXML::CrassXML(void)
     TAG_bspacers = XMLString::transcode("bspacers");
     TAG_consensus = XMLString::transcode("consensus");
     TAG_contig = XMLString::transcode("contig");
-    TAG_crass_assem = XMLString::transcode("crass_assem");
+    TAG_crispr = XMLString::transcode("crispr");
     TAG_cspacer = XMLString::transcode("cspacer");
     TAG_data = XMLString::transcode("data");
     TAG_dr = XMLString::transcode("dr");
@@ -95,7 +95,6 @@ CrassXML::CrassXML(void)
     TAG_fs = XMLString::transcode("fs");
     TAG_fspacers = XMLString::transcode("fspacers");
     TAG_group = XMLString::transcode("group");
-    TAG_log = XMLString::transcode("log");
     TAG_metadata = XMLString::transcode("metadata");
     TAG_notes = XMLString::transcode("notes");
     TAG_spacer = XMLString::transcode("spacer");
@@ -123,16 +122,15 @@ CrassXML::CrassXML(void)
 
 CrassXML::~CrassXML(void)
 {
-
+    // Free memory
+    delete CX_FileParser;
+    if (CX_DocElem != NULL) 
+    {
+        CX_DocElem->release();
+    }
     try // Free memory
     {
-        // Free memory
-
-        delete CX_FileParser;
-        if (CX_DocElem != NULL) 
-        {
-            CX_DocElem->release();
-        }
+        
         XMLString::release( &TAG_assembly );
         XMLString::release( &TAG_bf );
         XMLString::release( &TAG_bflankers );
@@ -140,7 +138,7 @@ CrassXML::~CrassXML(void)
         XMLString::release( &TAG_bspacers );
         XMLString::release( &TAG_consensus );
         XMLString::release( &TAG_contig );
-        XMLString::release( &TAG_crass_assem );
+        XMLString::release( &TAG_crispr );
         XMLString::release( &TAG_cspacer );
         XMLString::release( &TAG_data );
         XMLString::release( &TAG_dr );
@@ -153,7 +151,6 @@ CrassXML::~CrassXML(void)
         XMLString::release( &TAG_fs );
         XMLString::release( &TAG_fspacers );
         XMLString::release( &TAG_group );
-        XMLString::release( &TAG_log );
         XMLString::release( &TAG_metadata );
         XMLString::release( &TAG_notes );
         XMLString::release( &TAG_spacer );
@@ -183,84 +180,9 @@ CrassXML::~CrassXML(void)
         std::cerr << "Unknown exception encountered in TagNamesdtor" << std::endl;
     }
 
-      XMLPlatformUtils::Terminate();  // Terminate after release of memory
+    XMLPlatformUtils::Terminate();  // Terminate after release of memory
 }
 
-
-
-void CrassXML::parseCrassXMLFile(std::string XMLFile)
-{
-    //-----
-    // why not!
-    //
-    
-    //logInfo("Parsing from " << XMLFile, 1);
-    // Test to see if the file is ok.
-    struct stat fileStatus;
-    
-    int iretStat = stat(XMLFile.c_str(), &fileStatus);
-    if( iretStat == ENOENT )
-        throw ( std::runtime_error("Path file_name does not exist, or path is an empty string.") );
-    else if( iretStat == ENOTDIR )
-        throw ( std::runtime_error("A component of the path is not a directory."));
-    else if( iretStat == ELOOP )
-        throw ( std::runtime_error("Too many symbolic links encountered while traversing the path."));
-    else if( iretStat == EACCES )
-        throw ( std::runtime_error("Permission denied."));
-    else if( iretStat == ENAMETOOLONG )
-        throw ( std::runtime_error("File can not be read\n"));
-    
-    // Configure DOM parser.
-    CX_FileParser->setValidationScheme( XercesDOMParser::Val_Never );
-    CX_FileParser->setDoNamespaces( false );
-    CX_FileParser->setDoSchema( false );
-    CX_FileParser->setLoadExternalDTD( false );
-    
-    try
-    {
-        CX_FileParser->parse( XMLFile.c_str() );
-        
-        // no need to free this pointer - owned by the parent parser object
-        DOMDocument* xmlDoc = CX_FileParser->getDocument();
-        
-        // Get the top-level element: 
-        DOMElement* elementRoot = xmlDoc->getDocumentElement();
-        if( !elementRoot ) throw(std::runtime_error( "empty XML document" ));
-        
-        // get the children
-        DOMNodeList*      children = elementRoot->getChildNodes();
-        const  XMLSize_t nodeCount = children->getLength();
-        
-        // For all nodes, children of "root" in the XML tree.
-        for( XMLSize_t xx = 0; xx < nodeCount; ++xx )
-        {
-            DOMNode* currentNode = children->item(xx);
-            if( currentNode->getNodeType() &&  // true is not NULL
-               currentNode->getNodeType() == DOMNode::ELEMENT_NODE ) // is element 
-            {
-                // Found node which is an Element. Re-cast node as element
-                DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-                if( XMLString::equals(currentElement->getTagName(), TAG_log))
-                {
-                    // log section
-                }
-                else if (XMLString::equals(currentElement->getTagName(), TAG_group))
-                {
-                    // new group
-                    std::cout << XMLCH_2_STR(currentElement->getTagName()) << std::endl;
-                    std::cout << "Group_" << XMLCH_2_STR(currentElement->getAttribute(ATTR_gid)) << "_" << XMLCH_2_STR(currentElement->getAttribute(ATTR_drseq)) << ".fa" << std::endl;
-                }
-            }
-        }
-    }
-    catch( xercesc::XMLException& e )
-    {
-        char* message = xercesc::XMLString::transcode( e.getMessage() );
-        std::ostringstream errBuf;
-        errBuf << "Error parsing file: " << message << std::flush;
-        XMLString::release( &message );
-    }
-}
 
 void CrassXML::parseCrassXMLFile(std::string XMLFile, std::string& wantedGroup, std::string * directRepeat, std::set<std::string>& wantedContigs, std::list<std::string>& spacersForAssembly)
 {
@@ -316,42 +238,27 @@ void CrassXML::parseCrassXMLFile(std::string XMLFile, std::string& wantedGroup, 
 }
 
            
-xercesc::DOMElement * CrassXML::getWantedGroupFromRoot(xercesc::DOMElement * currentElement, std::string& wantedGroup, std::string * directRepeat)
+xercesc::DOMElement * CrassXML::getWantedGroupFromRoot(xercesc::DOMElement * parentNode, std::string& wantedGroup, std::string * directRepeat)
 {
-    
-    // get the children
-    DOMNodeList*      children = currentElement->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx )
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling())        
     {
-        DOMNode* current_node = children->item(xx);
-        if( current_node->getNodeType() &&  // true is not NULL
-           current_node->getNodeType() == DOMNode::ELEMENT_NODE ) // is element 
+        if (XMLString::equals(currentElement->getTagName(), TAG_group))
         {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* element = dynamic_cast< xercesc::DOMElement* >( current_node );
-            if( XMLString::equals(element->getTagName(), TAG_log))
+            // new group
+            // test if it's one that we want
+            //std::cout << "Group_" << XMLCH_2_STR(element->getAttribute(ATTR_gid)) << "_" << XMLCH_2_STR(element->getAttribute(ATTR_drseq)) << ".fa" << std::endl;
+            char * c_group_name = tc(currentElement->getAttribute(ATTR_gid));
+            std::string current_group_name = c_group_name;
+            xr(&c_group_name);
+            if (current_group_name == wantedGroup) 
             {
-                // log section
-            }
-            else if (XMLString::equals(element->getTagName(), TAG_group))
-            {
-                // new group
-                // test if it's one that we want
-                //std::cout << "Group_" << XMLCH_2_STR(element->getAttribute(ATTR_gid)) << "_" << XMLCH_2_STR(element->getAttribute(ATTR_drseq)) << ".fa" << std::endl;
-
-                std::string current_group_name = XMLCH_2_STR(element->getAttribute(ATTR_gid));
-
-                if (current_group_name == wantedGroup) 
-                {
-                    // get the length of the direct repeat 
-                    *directRepeat = XMLCH_2_STR(element->getAttribute(ATTR_drseq));
-                    return element;
-                }
+                // get the length of the direct repeat
+                char * c_dr = tc(currentElement->getAttribute(ATTR_drseq));
+                *directRepeat = c_dr;
+                return currentElement;
             }
         }
+        
     }
     
     // we should theoretically never get here but if the xml is bad then it might just happen
@@ -359,79 +266,56 @@ xercesc::DOMElement * CrassXML::getWantedGroupFromRoot(xercesc::DOMElement * cur
     return NULL;
 }
 
-xercesc::DOMElement * CrassXML::parseGroupForAssembly(xercesc::DOMElement* currentElement)
+xercesc::DOMElement * CrassXML::parseGroupForAssembly(xercesc::DOMElement* parentNode)
 {
-   DOMNodeList*      group_children = currentElement->getChildNodes();
-   const  XMLSize_t group_nodeCount = group_children->getLength();
-   
-   // For all nodes, children of "root" in the XML tree.
-   for( XMLSize_t yy = 0; yy < group_nodeCount; ++yy )
-   {
-       DOMNode* current_node = group_children->item(yy);
-       if( current_node->getNodeType() &&  current_node->getNodeType() == DOMNode::ELEMENT_NODE ) // is element 
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling())        
+    {
+       if( XMLString::equals(currentElement->getTagName(), TAG_assembly))
        {
-           // Found node which is an Element. Re-cast node as element
-           xercesc::DOMElement* element = dynamic_cast< xercesc::DOMElement* >( current_node );
-           if( XMLString::equals(element->getTagName(), TAG_assembly))
-           {
-               // assembly section
-               // the child nodes will be the contigs
-               return element;
-           }
-           
-       }
+           // assembly section
+           // the child nodes will be the contigs
+           return currentElement;
+       }       
    }
     // if there is no assembly for this group
     return NULL;
 } 
 
-void CrassXML::parseAssemblyForContigIds(xercesc::DOMElement* currentElement, std::set<std::string>& wantedContigs, std::list<std::string>& spacersForAssembly)
+void CrassXML::parseAssemblyForContigIds(xercesc::DOMElement* parentNode, std::set<std::string>& wantedContigs, std::list<std::string>& spacersForAssembly)
 {
-   DOMNodeList*      group_children = currentElement->getChildNodes();
-   const  XMLSize_t group_nodeCount = group_children->getLength();
-   
-   for( XMLSize_t yy = 0; yy < group_nodeCount; ++yy )
-   {
-       DOMNode* current_node = group_children->item(yy);
-       if( current_node->getNodeType() &&  current_node->getNodeType() == DOMNode::ELEMENT_NODE ) // is element 
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling())        
+    {
+       if( XMLString::equals(currentElement->getTagName(), TAG_contig))
        {
-           // Found node which is an Element. Re-cast node as element
-           xercesc::DOMElement* element = dynamic_cast< xercesc::DOMElement* >( current_node );
-           if( XMLString::equals(element->getTagName(), TAG_contig))
+           // check to see if the current contig is one that we want
+           char * c_current_contig = tc(currentElement->getAttribute(ATTR_cid));
+           std::string current_contig = c_current_contig;
+           std::set<std::string>::iterator contig_iter = wantedContigs.find(current_contig);
+           if( contig_iter != wantedContigs.end())
            {
-               // check to see if the current contig is one that we want
-               std::set<std::string>::iterator contig_iter = wantedContigs.find(XMLCH_2_STR(element->getAttribute(ATTR_cid)));
-               if( contig_iter != wantedContigs.end())
-               {
-                   
-                   // get the spacers from the assembly
-                   getSpacerIdForAssembly(element, spacersForAssembly);
-               }
+               
+               // get the spacers from the assembly
+               getSpacerIdForAssembly(currentElement, spacersForAssembly);
            }
+           xr(&c_current_contig);
        }
+       
    }
 }
 
-void CrassXML::getSpacerIdForAssembly(xercesc::DOMElement* currentElement, std::list<std::string>& spacersForAssembly)
+void CrassXML::getSpacerIdForAssembly(xercesc::DOMElement* parentNode, std::list<std::string>& spacersForAssembly)
 {
-    DOMNodeList*      group_children = currentElement->getChildNodes();
-    const  XMLSize_t group_nodeCount = group_children->getLength();
-    
-    for( XMLSize_t yy = 0; yy < group_nodeCount; ++yy )
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling())        
     {
-        DOMNode* current_node = group_children->item(yy);
-        if( current_node->getNodeType() &&  current_node->getNodeType() == DOMNode::ELEMENT_NODE ) // is element 
+        if( XMLString::equals(currentElement->getTagName(), TAG_cspacer))
         {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* element = dynamic_cast< xercesc::DOMElement* >( current_node );
-            if( XMLString::equals(element->getTagName(), TAG_cspacer))
-            {
-                spacersForAssembly.push_back(XMLCH_2_STR(element->getAttribute(ATTR_spid)));
-            }
+            char * c_cspacer = tc(currentElement->getAttribute(ATTR_spid));
+            std::string str = c_cspacer;
+            spacersForAssembly.push_back(str);
+            xr(&c_cspacer);
         }
     }
 }
-
 
 DOMDocument * CrassXML::setFileParser(const char * XMLFile)
 {
@@ -456,24 +340,27 @@ DOMDocument * CrassXML::setFileParser(const char * XMLFile)
     }
 }
 
-
-
-DOMElement * CrassXML::createDOMDocument(std::string& rootElement, std::string& versionNumber, int& errorNumber )   
+DOMElement * CrassXML::createDOMDocument(std::string rootElement, std::string versionNumber, int& errorNumber )   
 {
-    DOMImplementation* impl =  DOMImplementationRegistry::getDOMImplementation(STR_2_XMLCH("Core"));
-    
+    XMLCh * core = tc("Core");
+    DOMImplementation* impl =  DOMImplementationRegistry::getDOMImplementation(core);
+    xr(&core);
     if (impl != NULL)
     {
         try
         {
-            CX_DocElem = impl->createDocument(
-                                                    0,                    // root element namespace URI.
-                                                    STR_2_XMLCH(rootElement),         // root element name
-                                                    0);                   // document type object (DTD).
+            XMLCh * x_root_elem = tc(rootElement.c_str());
+            CX_DocElem = impl->createDocument( 0, x_root_elem, 0);  
+            xr(&x_root_elem);
+
             if (CX_DocElem != NULL) 
             {
                 DOMElement* rootElem = CX_DocElem->getDocumentElement();
-                rootElem->setAttribute(STR_2_XMLCH("version"), STR_2_XMLCH(versionNumber));
+                XMLCh * x_version_num = tc(versionNumber.c_str());
+
+                rootElem->setAttribute(ATTR_version, x_version_num);
+                xr(&x_version_num);
+
                 errorNumber = 0;
                 return rootElem;
             }
@@ -504,20 +391,26 @@ DOMElement * CrassXML::createDOMDocument(std::string& rootElement, std::string& 
 
 DOMElement * CrassXML::createDOMDocument(const char * rootElement, const char * versionNumber, int& errorNumber )   
 {
-    DOMImplementation* impl =  DOMImplementationRegistry::getDOMImplementation(STR_2_XMLCH("Core"));
-    
+    XMLCh * core = tc("Core");
+    DOMImplementation* impl =  DOMImplementationRegistry::getDOMImplementation(core);
+    xr(&core);
     if (impl != NULL)
     {
         try
         {
-            CX_DocElem = impl->createDocument(
-                                              0,                    // root element namespace URI.
-                                              STR_2_XMLCH(rootElement),         // root element name
-                                              0);                   // document type object (DTD).
+            XMLCh * x_root_elem = tc(rootElement);
+            CX_DocElem = impl->createDocument(0, x_root_elem, 0);
+            
+            xr(&x_root_elem);
+            
             if (CX_DocElem != NULL) 
             {
                 DOMElement* rootElem = CX_DocElem->getDocumentElement();
-                rootElem->setAttribute(STR_2_XMLCH("version"), STR_2_XMLCH(versionNumber));
+                XMLCh * x_version_num = tc(versionNumber);
+                
+                rootElem->setAttribute(ATTR_version, x_version_num );
+                
+                xr(&x_version_num);
                 errorNumber = 0;
                 return rootElem;
             }
@@ -548,9 +441,11 @@ DOMElement * CrassXML::createDOMDocument(const char * rootElement, const char * 
 
 xercesc::DOMElement * CrassXML::addMetaData(std::string notes, DOMElement * parentNode)
 {
-    DOMElement * meta_data_elem = CX_DocElem->createElement(STR_2_XMLCH("metadata"));
-    DOMElement * notes_elem = CX_DocElem->createElement(STR_2_XMLCH("notes"));
-    DOMText * meta_data_notes = CX_DocElem->createTextNode(STR_2_XMLCH(notes));
+    DOMElement * meta_data_elem = CX_DocElem->createElement(TAG_metadata);
+    DOMElement * notes_elem = CX_DocElem->createElement(TAG_notes);
+    XMLCh * x_notes = tc(notes.c_str());
+    DOMText * meta_data_notes = CX_DocElem->createTextNode(x_notes);
+    xr(&x_notes);
     notes_elem->appendChild(meta_data_notes);
     meta_data_elem->appendChild(notes_elem);
     parentNode->appendChild(meta_data_elem);
@@ -560,19 +455,28 @@ xercesc::DOMElement * CrassXML::addMetaData(std::string notes, DOMElement * pare
 }
 void CrassXML::addFileToMetadata(std::string type, std::string url, DOMElement * parentNode)
 {
-    DOMElement * file = CX_DocElem->createElement(STR_2_XMLCH("file"));
-    file->setAttribute(STR_2_XMLCH("type"), STR_2_XMLCH(type));
-    file->setAttribute(STR_2_XMLCH("url"), STR_2_XMLCH(url));
+    DOMElement * file = CX_DocElem->createElement(TAG_file);
+    XMLCh * x_type = tc(type.c_str());
+    XMLCh * x_url = tc(url.c_str());
+    file->setAttribute(ATTR_type, x_type);
+    file->setAttribute(ATTR_url, x_url);
+    xr(&x_type);
+    xr(&x_url);
     parentNode->appendChild(file);
 }
 xercesc::DOMElement * CrassXML::addGroup(std::string& gID, std::string& drConsensus, DOMElement * parentNode)
 {
-    DOMElement * group = CX_DocElem->createElement(STR_2_XMLCH("group"));
+    DOMElement * group = CX_DocElem->createElement(TAG_group);
     
     // Set the attributes of the group
-    group->setAttribute(STR_2_XMLCH("gid"), STR_2_XMLCH(gID));
-    group->setAttribute(STR_2_XMLCH("drseq"), STR_2_XMLCH(drConsensus));
+    XMLCh * x_gID = tc(gID.c_str());
+    XMLCh * x_drConsensus = tc(drConsensus.c_str());
     
+    group->setAttribute(ATTR_gid, x_gID);
+    group->setAttribute(ATTR_drseq, x_drConsensus);
+    
+    xr(&x_gID);
+    xr(&x_drConsensus);
     // add the group to the parent (root element)
     parentNode->appendChild(group);
     return group;
@@ -580,9 +484,9 @@ xercesc::DOMElement * CrassXML::addGroup(std::string& gID, std::string& drConsen
 xercesc::DOMElement * CrassXML::addData(xercesc::DOMElement * parentNode)
 {
     // create the data node with spacer and drs as child elements 
-    DOMElement * data = CX_DocElem->createElement(STR_2_XMLCH("data"));
-    DOMElement * drs = CX_DocElem->createElement(STR_2_XMLCH("drs"));
-    DOMElement * spacers = CX_DocElem->createElement(STR_2_XMLCH("spacers"));
+    DOMElement * data = CX_DocElem->createElement(TAG_data);
+    DOMElement * drs = CX_DocElem->createElement(TAG_drs);
+    DOMElement * spacers = CX_DocElem->createElement(TAG_spacers);
     data->appendChild(drs);
     data->appendChild(spacers);
     parentNode->appendChild(data);
@@ -590,86 +494,141 @@ xercesc::DOMElement * CrassXML::addData(xercesc::DOMElement * parentNode)
 }
 xercesc::DOMElement * CrassXML::addAssembly(xercesc::DOMElement * parentNode)
 {
-    DOMElement * assembly = CX_DocElem->createElement(STR_2_XMLCH("assembly"));
+    DOMElement * assembly = CX_DocElem->createElement(TAG_assembly);
     parentNode->appendChild(assembly);
     return assembly;
 }
 void CrassXML::addDirectRepeat(std::string& drid, std::string& seq, DOMElement * parentNode)
 {
-    DOMElement * dr = CX_DocElem->createElement(STR_2_XMLCH("dr"));
-    dr->setAttribute(STR_2_XMLCH("seq"), STR_2_XMLCH(seq));
-    dr->setAttribute(STR_2_XMLCH("drid"), STR_2_XMLCH(drid));
+    DOMElement * dr = CX_DocElem->createElement(TAG_dr);
+    
+    XMLCh * x_seq = tc(seq.c_str());
+    XMLCh * x_drid = tc(drid.c_str());
+    
+    dr->setAttribute(ATTR_seq, x_seq);
+    dr->setAttribute(ATTR_drid, x_drid);
+    
+    xr(&x_seq);
+    xr(&x_drid);
+    
     parentNode->appendChild(dr);
 }
-void CrassXML::addSpacer(std::string& seq, std::string& spid, DOMElement * parentNode)
+void CrassXML::addSpacer(std::string& seq, std::string& spid, DOMElement * parentNode, std::string cov)
 {
-    DOMElement * sp = CX_DocElem->createElement(STR_2_XMLCH("spacer"));
-    sp->setAttribute(STR_2_XMLCH("seq"), STR_2_XMLCH(seq));
-    sp->setAttribute(STR_2_XMLCH("spid"), STR_2_XMLCH(spid));
+    DOMElement * sp = CX_DocElem->createElement(TAG_spacer);
+    XMLCh * x_seq = tc(seq.c_str());
+    XMLCh * x_cov = tc(cov.c_str());
+    XMLCh * x_spid = tc(spid.c_str());
+    
+    sp->setAttribute(ATTR_seq, x_seq);
+    sp->setAttribute(ATTR_spid, x_spid);
+    sp->setAttribute(ATTR_cov, x_cov);
+    
+    xr(&x_seq);
+    xr(&x_cov);
+    xr(&x_spid);
+    
     parentNode->appendChild(sp);
 }
 xercesc::DOMElement * CrassXML::createFlankers(xercesc::DOMElement * parentNode)
 {
-    DOMElement * flankers = CX_DocElem->createElement(STR_2_XMLCH("flankers"));
+    DOMElement * flankers = CX_DocElem->createElement(TAG_flankers);
     parentNode->appendChild(flankers);
     return flankers;
 }
 void CrassXML::addFlanker(std::string& seq, std::string& flid, xercesc::DOMElement * parentNode)
 {
-    DOMElement * flanker = CX_DocElem->createElement(STR_2_XMLCH("flanker"));
-    flanker->setAttribute(STR_2_XMLCH("seq"), STR_2_XMLCH(seq));
-    flanker->setAttribute(STR_2_XMLCH("flid"), STR_2_XMLCH(flid));
+    XMLCh * x_seq = tc(seq.c_str());
+    XMLCh * x_flid = tc(flid.c_str());
+
+    DOMElement * flanker = CX_DocElem->createElement(TAG_flanker);
+    flanker->setAttribute(ATTR_seq, x_seq);
+    flanker->setAttribute(ATTR_flid, x_flid);
+    
+    xr(&x_seq);
+    xr(&x_flid);
+    
     parentNode->appendChild(flanker);
 }
 xercesc::DOMElement * CrassXML::addContig(std::string& cid, DOMElement * parentNode)
 {
-    DOMElement * contig = CX_DocElem->createElement(STR_2_XMLCH("contig"));
-    contig->setAttribute(STR_2_XMLCH("cid"), STR_2_XMLCH(cid));
+    DOMElement * contig = CX_DocElem->createElement(TAG_contig);
+    
+    XMLCh * x_cid = tc(cid.c_str());
+    contig->setAttribute(ATTR_cid, x_cid);
+    xr(&x_cid);
     parentNode->appendChild(contig);
     return contig;
 }
 void CrassXML::createConsensus(std::string& concensus, xercesc::DOMElement * parentNode)
 {
-    DOMElement * concensus_elem = CX_DocElem->createElement(STR_2_XMLCH("concensus"));
-    DOMText * concensus_text = CX_DocElem->createTextNode(STR_2_XMLCH(concensus));
+    DOMElement * concensus_elem = CX_DocElem->createElement(TAG_consensus);
+    XMLCh * x_consensus = tc(concensus.c_str());
+    DOMText * concensus_text = CX_DocElem->createTextNode(x_consensus);
+    
+    xr(&x_consensus);
+    
     concensus_elem->appendChild(concensus_text);
     parentNode->appendChild(concensus_elem);
 }
 xercesc::DOMElement * CrassXML::addSpacerToContig(std::string& spid, DOMElement * parentNode)
 {
-    DOMElement * cspacer = CX_DocElem->createElement(STR_2_XMLCH("cspacer"));
-    cspacer->setAttribute(STR_2_XMLCH("spid"), STR_2_XMLCH(spid));
+    DOMElement * cspacer = CX_DocElem->createElement(TAG_cspacer);
+    XMLCh * x_spid = tc(spid.c_str());
+    cspacer->setAttribute(ATTR_spid, x_spid);
+    xr(&x_spid);
     parentNode->appendChild(cspacer);
     return cspacer;
 }
 xercesc::DOMElement * CrassXML::createSpacers(std::string tag)
 {
-    DOMElement * spacers = CX_DocElem->createElement(STR_2_XMLCH(tag));
-    //cspacer->appendChild(spacers);
+    XMLCh * x_tag = tc(tag.c_str());
+    DOMElement * spacers = CX_DocElem->createElement(x_tag);
+    xr(&x_tag);
     return spacers;
 }
 
 xercesc::DOMElement * CrassXML::createFlankers(std::string tag)
 {
-    DOMElement * flankers = CX_DocElem->createElement(STR_2_XMLCH(tag));
-    //parentNode->appendChild(flankers);
-    return flankers;
+    return createSpacers(tag);
 }
 
 void CrassXML::addSpacer(std::string tag, std::string& spid, std::string& drid, std::string& drconf, DOMElement * parentNode)
 {
-    DOMElement * fs = CX_DocElem->createElement(STR_2_XMLCH(tag));
-    fs->setAttribute(STR_2_XMLCH("drid"), STR_2_XMLCH(drid));
-    fs->setAttribute(STR_2_XMLCH("drconf"), STR_2_XMLCH(drconf));
-    fs->setAttribute(STR_2_XMLCH("spid"), STR_2_XMLCH(spid));
+    XMLCh * x_tag = tc(tag.c_str());
+    XMLCh * x_drid = tc(drid.c_str());
+    XMLCh * x_drconf = tc(drconf.c_str());
+    XMLCh * x_spid = tc(spid.c_str());
+
+    DOMElement * fs = CX_DocElem->createElement(x_tag);
+    fs->setAttribute(ATTR_drid, x_drid);
+    fs->setAttribute(ATTR_drconf, x_drconf);
+    fs->setAttribute(ATTR_spid, x_spid);
+    
+    xr(&x_tag);
+    xr(&x_drid);
+    xr(&x_drconf);
+    xr(&x_spid);
+    
     parentNode->appendChild(fs);
 }
 void CrassXML::addFlanker(std::string tag, std::string& flid, std::string& drconf, std::string& directjoin, xercesc::DOMElement * parentNode)
 {
-    DOMElement * bf = CX_DocElem->createElement(STR_2_XMLCH(tag));
-    bf->setAttribute(STR_2_XMLCH("flid"), STR_2_XMLCH(flid));
-    bf->setAttribute(STR_2_XMLCH("drconf"), STR_2_XMLCH(drconf));
-    bf->setAttribute(STR_2_XMLCH("directjoin"), STR_2_XMLCH(directjoin));
+    XMLCh * x_tag = tc(tag.c_str());
+    XMLCh * x_flid = tc(flid.c_str());
+    XMLCh * x_drconf = tc(drconf.c_str());
+    XMLCh * x_directjoin = tc(directjoin.c_str());
+    
+    DOMElement * bf = CX_DocElem->createElement(x_tag);
+    bf->setAttribute(ATTR_flid, x_flid);
+    bf->setAttribute(ATTR_drconf, x_drconf);
+    bf->setAttribute(ATTR_directjoin, x_directjoin);
+    
+    xr(&x_tag);
+    xr(&x_flid);
+    xr(&x_drconf);
+    xr(&x_directjoin);
+    
     parentNode->appendChild(bf);
 }
 
@@ -690,8 +649,9 @@ bool CrassXML::printDOMToFile(std::string outFileName )
         DOMLSOutput       *theOutputDesc = ((DOMImplementationLS*)impl)->createLSOutput();
         
         // set user specified output encoding
-        theOutputDesc->setEncoding(STR_2_XMLCH("ISO8859-1"));
-        
+        XMLCh * x_encoding = tc("ISO8859-1");
+        theOutputDesc->setEncoding(x_encoding);
+        xr(&x_encoding);
 
         DOMConfiguration* serializerConfig=theSerializer->getDomConfig();
         
@@ -741,10 +701,12 @@ bool CrassXML::printDOMToFile(std::string outFileName )
     }
     catch (XMLException& e)
     {
+        char * c_exept = tc(e.getMessage());
         XERCES_STD_QUALIFIER cerr << "An error occurred during creation of output transcoder. Msg is:"
         << XERCES_STD_QUALIFIER endl
-        << XMLCH_2_STR(e.getMessage()) << XERCES_STD_QUALIFIER endl;
+        << c_exept << XERCES_STD_QUALIFIER endl;
         retval = false;
+        xr(&c_exept);
     }
 
 return retval;
@@ -764,8 +726,9 @@ bool CrassXML::printDOMToScreen(void )
         DOMLSOutput       *theOutputDesc = ((DOMImplementationLS*)impl)->createLSOutput();
         
         // set user specified output encoding
-        theOutputDesc->setEncoding(STR_2_XMLCH("ISO8859-1"));
-        
+        XMLCh * x_encoding = tc("ISO8859-1");
+        theOutputDesc->setEncoding(x_encoding);
+        xr(&x_encoding);
         
         DOMConfiguration* serializerConfig=theSerializer->getDomConfig();
         
@@ -814,10 +777,12 @@ bool CrassXML::printDOMToScreen(void )
     }
     catch (XMLException& e)
     {
+        char * c_exept = tc(e.getMessage());
         XERCES_STD_QUALIFIER cerr << "An error occurred during creation of output transcoder. Msg is:"
         << XERCES_STD_QUALIFIER endl
-        << XMLCH_2_STR(e.getMessage()) << XERCES_STD_QUALIFIER endl;
+        << c_exept << XERCES_STD_QUALIFIER endl;
         retval = false;
+        xr(&c_exept);
     }
     
     return retval;
@@ -837,7 +802,9 @@ bool CrassXML::printDOMToFile(std::string outFileName, DOMDocument * docDOM )
         DOMLSOutput       *theOutputDesc = ((DOMImplementationLS*)impl)->createLSOutput();
         
         // set user specified output encoding
-        theOutputDesc->setEncoding(STR_2_XMLCH("ISO8859-1"));
+        XMLCh * x_encoding = tc("ISO8859-1");
+        theOutputDesc->setEncoding(x_encoding);
+        xr(&x_encoding);
         
         
         DOMConfiguration* serializerConfig = theSerializer->getDomConfig();
@@ -888,10 +855,12 @@ bool CrassXML::printDOMToFile(std::string outFileName, DOMDocument * docDOM )
     }
     catch (XMLException& e)
     {
+        char * c_msg = tc(e.getMessage());
         XERCES_STD_QUALIFIER cerr << "An error occurred during creation of output transcoder. Msg is:"
         << XERCES_STD_QUALIFIER endl
-        << XMLCH_2_STR(e.getMessage()) << XERCES_STD_QUALIFIER endl;
+        << c_msg << XERCES_STD_QUALIFIER endl;
         retval = false;
+        xr(&c_msg);
     }
     
     return retval;
@@ -911,7 +880,10 @@ bool CrassXML::printDOMToScreen(DOMDocument * domDoc )
         DOMLSOutput       *theOutputDesc = ((DOMImplementationLS*)impl)->createLSOutput();
         
         // set user specified output encoding
-        theOutputDesc->setEncoding(STR_2_XMLCH("ISO8859-1"));
+        XMLCh * x_encoding = tc("ISO8859-1");
+
+        theOutputDesc->setEncoding(x_encoding);
+        xr(&x_encoding);
         
         
         DOMConfiguration* serializerConfig=theSerializer->getDomConfig();
@@ -961,10 +933,12 @@ bool CrassXML::printDOMToScreen(DOMDocument * domDoc )
     }
     catch (XMLException& e)
     {
+        char * c_msg = tc(e.getMessage());
         XERCES_STD_QUALIFIER cerr << "An error occurred during creation of output transcoder. Msg is:"
         << XERCES_STD_QUALIFIER endl
-        << XMLCH_2_STR(e.getMessage()) << XERCES_STD_QUALIFIER endl;
+        << c_msg << XERCES_STD_QUALIFIER endl;
         retval = false;
+        xr(&c_msg);
     }
     
     return retval;

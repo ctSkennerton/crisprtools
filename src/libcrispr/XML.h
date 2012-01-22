@@ -1,4 +1,4 @@
-// File: CrassXML.h
+// File: XML.h
 // Original Author: Michael Imelfort 2011
 // --------------------------------------------------------------------
 //
@@ -37,8 +37,8 @@
 //              A B R A C A D A B R A 
 //
 
-#ifndef CrassXML_h
-#define CrassXML_h
+#ifndef XML_h
+#define XML_h
 
 // system includes
 #include <xercesc/dom/DOM.hpp>
@@ -72,9 +72,8 @@
 #include <iostream.h>
 #endif
 
-
-#include "StlExt.h"
-
+#define tc(buf) xercesc::XMLString::transcode(buf)
+#define xr(buf) xercesc::XMLString::release(buf)
 
 // Error codes
 enum {
@@ -83,76 +82,6 @@ enum {
     ERROR_PARSE,
     ERROR_EMPTY_DOCUMENT
 };
-
-// ---------------------------------------------------------------------------
-//  This is a simple class that lets us do easy (though not terribly efficient)
-//  trancoding of char* data to XMLCh data.
-// ---------------------------------------------------------------------------
-class TranscodeStr
-{
-    public :
-    // -----------------------------------------------------------------------
-    //  Constructors and Destructor
-    // -----------------------------------------------------------------------
-    TranscodeStr(const char* const toTranscode)
-    {
-        // Call the private transcoding method
-        TR_XmlString = xercesc::XMLString::transcode(toTranscode);
-    }
-    TranscodeStr(const std::string& toTranscode)
-    {
-        // Call the private transcoding method
-        TR_XmlString = xercesc::XMLString::transcode(toTranscode.c_str());
-    }
-    TranscodeStr(const XMLCh * toTranscode)
-    {
-        // Call the private transcoding method
-        TR_CString = xercesc::XMLString::transcode(toTranscode);
-        TR_CUsed = true;
-    }
-    ~TranscodeStr()
-    {
-        if (TR_CUsed) {
-            xercesc::XMLString::release(&TR_CString);
-        } else {
-            xercesc::XMLString::release(&TR_XmlString);
-        }
-    }
-    
-    
-    // -----------------------------------------------------------------------
-    //  Getter methods
-    // -----------------------------------------------------------------------
-    const char * cForm() const
-    {
-        if (TR_CUsed) {
-            return TR_CString;
-        } else {
-            return NULL;
-            
-        }
-    }
-    const XMLCh * xForm() const 
-    {
-        if (!TR_CUsed) {
-            return TR_XmlString;
-        } else {
-            return NULL;
-        }
-    }
-    
-    private :
-    // -----------------------------------------------------------------------
-    //  Private data members
-    //
-    //  fUnicodeForm
-    //      This is the Unicode XMLCh format of the string.
-    // -----------------------------------------------------------------------
-    XMLCh *   TR_XmlString;
-    char *    TR_CString;
-    bool      TR_CUsed;
-};
-
 
 class CrassXML 
 {
@@ -190,7 +119,7 @@ public:
     inline XMLCh * getBspacers(void){return TAG_bspacers;};
     inline XMLCh * getConsensus(void){return TAG_consensus;};
     inline XMLCh * getContig(void){return TAG_contig;};
-    inline XMLCh * getCrass_assem(void){return TAG_crass_assem;};
+    inline XMLCh * getCrispr(void){return TAG_crispr;};
     inline XMLCh * getCspacer(void){return TAG_cspacer;};
     inline XMLCh * getData(void){return TAG_data;};
     inline XMLCh * getDr(void){return TAG_dr;};
@@ -223,27 +152,7 @@ public:
     //
     void parseCrassXMLFile(std::string XMLFile);
     void parseCrassXMLFile(std::string XMLFile, std::string& wantedGroup, std::string * directRepeat, std::set<std::string>& wantedContigs, std::list<std::string>& spacersForAssembly);
-    //std::string XMLCH_2_STR(const XMLCh* xmlch);
-    
-    char * XMLCH_2_STR( const XMLCh* toTranscode ) 
-    {
-        //-----
-        // transcode on the fly, make sure to keep the values so we can release
-        //
-        char* ret_val = xercesc::XMLString::transcode(toTranscode); 
-        CHAR_transcodes.push_back(ret_val);
-        return ret_val;
-    }
-    
-    XMLCh * STR_2_XMLCH( const std::string& toTranscode ) 
-    {  
-        //-----
-        // transcode on the fly, make sure to keep the values so we can release
-        //
-        XMLCh * ret_val = xercesc::XMLString::transcode(toTranscode.c_str()); 
-        XML_transcodes.push_back(ret_val);
-        return ret_val;
-    }
+
     xercesc::DOMElement * getWantedGroupFromRoot(xercesc::DOMElement * currentElement, std::string& wantedGroup, std::string * directRepeat);
     xercesc::DOMElement * parseGroupForAssembly(xercesc::DOMElement* currentElement);
     void parseAssemblyForContigIds(xercesc::DOMElement* currentElement, std::set<std::string>& wantedContigs, std::list<std::string>& spacersForAssembly);
@@ -256,7 +165,7 @@ public:
     
     
     //DOMDocument Creation returns root node
-    xercesc::DOMElement * createDOMDocument(std::string& rootElement, std::string& versionNumber, int& errorNumber );
+    xercesc::DOMElement * createDOMDocument(std::string rootElement, std::string versionNumber, int& errorNumber );
     xercesc::DOMElement * createDOMDocument(const char * rootElement, const char * versionNumber, int& errorNumber );
     
     // add a <metadata> tag to <group> with notes
@@ -278,7 +187,7 @@ public:
     void addDirectRepeat(std::string& drid, std::string& seq, xercesc::DOMElement * dataNode);
     
     // add a spcaer to the <data> (<spacer>)
-    void addSpacer(std::string& seq, std::string& spid, xercesc::DOMElement * dataNode);
+    void addSpacer(std::string& seq, std::string& spid, xercesc::DOMElement * dataNode, std::string cov = "0" );
     
     // create a <flankers> tag in <data>
     xercesc::DOMElement * createFlankers(xercesc::DOMElement * parentNode);
@@ -320,10 +229,6 @@ private:
     xercesc::XercesDOMParser * CX_FileParser;			// parsing object
     xercesc::DOMDocument * CX_DocElem;
     
-    // we need to keep track of what it is we are transcoding so we can release at the end
-    std::vector<XMLCh*> XML_transcodes;
-    std::vector<char*> CHAR_transcodes;
-    
     // grep ATTLIST crass.dtd | sed -e "s%[^ ]* [^ ]* \([^ ]*\) .*%XMLCh\* ATTR_\1;%" | sort | uniq
     // grep ELEMENT crass.dtd | sed -e "s%[^ ]* \([^ ]*\) .*%XMLCh\* TAG_\1;%" | sort | uniq
     XMLCh* ATTR_cid;
@@ -349,7 +254,7 @@ private:
     XMLCh* TAG_bspacers;
     XMLCh* TAG_consensus;
     XMLCh* TAG_contig;
-    XMLCh* TAG_crass_assem;
+    XMLCh* TAG_crispr;
     XMLCh* TAG_cspacer;
     XMLCh* TAG_data;
     XMLCh* TAG_dr;

@@ -34,8 +34,8 @@
 
 #include <iostream>
 #include "RemoveTool.h"
-#include "CrassXML.h"
-#include "CrisprException.h"
+#include "XML.h"
+#include "Exception.h"
 #include "StlExt.h"
 #include "config.h"
 
@@ -66,12 +66,13 @@ int removeMain(int argc, char ** argv)
         for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
             if (xercesc::XMLString::equals(currentElement->getTagName(), xml_obj.getGroup())) {
                 // new group
-                std::string group_id = xml_obj.XMLCH_2_STR(currentElement->getAttribute(xml_obj.getGid()));
-                std::cout<<group_id<<std::endl;
+                char * c_group_id = tc(currentElement->getAttribute(xml_obj.getGid()));
+                std::string group_id = c_group_id;
                 if (groups.find(group_id.substr(1)) != groups.end() ) {
                     bad_children.push_back(currentElement);
                     //root_elem->removeChild(currentElement);
                 }
+                xr(&c_group_id);
             }
         }
         std::vector<xercesc::DOMElement * >::iterator iter = bad_children.begin();

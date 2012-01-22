@@ -18,7 +18,7 @@
 #include "StatTool.h"
 #include "StlExt.h"
 #include "config.h"
-#include "CrisprException.h"
+#include "Exception.h"
 #include <iostream>
 
 StatTool::~StatTool()
@@ -88,40 +88,42 @@ int StatTool::processInputFile(const char * inputFile)
         xercesc::DOMDocument * input_doc_obj = xml_parser.setFileParser(inputFile);
         xercesc::DOMElement * root_elem = input_doc_obj->getDocumentElement();
 
-        // get the children
-        xercesc::DOMNodeList * children = root_elem->getChildNodes();
-        const  XMLSize_t nodeCount = children->getLength();
-        
-        // For all nodes, children of "root" in the XML tree.
-        for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-            xercesc::DOMNode * currentNode = children->item(xx);
-            if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-                // Found node which is an Element. Re-cast node as element
-                xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
+        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
                 
-                // is this a group element
-                if (xercesc::XMLString::equals(currentElement->getTagName(), xml_parser.getGroup())) {
-                    std::string group_id = xml_parser.XMLCH_2_STR(currentElement->getAttribute(xml_parser.getGid()));
-                    if (ST_Subset) {
-                        // we only want some of the groups look at DT_Groups
-                        if (ST_Groups.find(group_id.substr(1)) != ST_Groups.end() ) {
-                            parseGroup(currentElement, xml_parser);
-                        }
-                    } else {
-                        parseGroup(currentElement, xml_parser);   
+            // is this a group element
+            if (xercesc::XMLString::equals(currentElement->getTagName(), xml_parser.getGroup())) {
+                char * c_gid = tc(currentElement->getAttribute(xml_parser.getGid()));
+                std::string group_id = c_gid;
+                if (ST_Subset) {
+                    // we only want some of the groups look at DT_Groups
+                    if (ST_Groups.find(group_id.substr(1)) != ST_Groups.end() ) {
+                        parseGroup(currentElement, xml_parser);
                     }
+                } else {
+                    parseGroup(currentElement, xml_parser);   
                 }
+                xr(&c_gid);
             }
+            
         }
         
         // go through each of the groups and print out a pretty picture
         std::vector<StatManager *>::iterator iter = this->begin();
         while (iter != this->end()) {
-            prettyPrint(*iter);
+            if (ST_Pretty) {
+                prettyPrint(*iter);
+            } else {
+                printTabular(*iter);
+            }
             iter++;
         }
         
         
+    } catch (xercesc::DOMException& e ) {
+        char * c_msg = tc(e.getMessage());
+        std::cerr<<c_msg<<std::endl;
+        xr(&c_msg);
     } catch (crispr::xml_exception& e) {
         std::cerr<<e.what()<<std::endl;
         return 1;
@@ -134,119 +136,95 @@ void StatTool::parseGroup(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
     
     StatManager * sm = new StatManager();
     ST_StatsVec.push_back(sm);
-    std::string concensusRepeat = TranscodeStr(parentNode->getAttribute(xmlParser.getDrseq())).cForm();
+    char * c_cons = tc(parentNode->getAttribute(xmlParser.getDrseq()));
+    std::string concensusRepeat =c_cons;
     sm->setConcensus(concensusRepeat);
-    
-    std::string gid = TranscodeStr(parentNode->getAttribute(xmlParser.getGid())).cForm();
+    xr(&c_cons);
+
+    char * c_gid = tc(parentNode->getAttribute(xmlParser.getGid()));
+    std::string gid = c_gid;
+    xr(&c_gid);
     sm->setGid(gid);
     
     
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getData())) {
-                parseData(currentElement, xmlParser, sm);
-                
-            } /*else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getAssembly())) {
-                if (ST_AssemblyStats) {
-                    parseAssembly(currentElement, xmlParser);
-                }
-            }*/
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getData())) {
+            parseData(currentElement, xmlParser, sm);
+            
+        } /*else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getAssembly())) {
+            if (ST_AssemblyStats) {
+                parseAssembly(currentElement, xmlParser);
+            }
+        }*/
             
             
-        }
+        
     }
 }
 
 void StatTool::parseData(xercesc::DOMElement * parentNode, CrassXML& xmlParser, StatManager * statManager)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
             
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDrs())) {
-                // change the direct repeats
-                parseDrs(currentElement, xmlParser, statManager);
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacers())) {
-                // change the spacers
-                parseSpacers(currentElement, xmlParser, statManager);
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFlankers())) {
-                // change the flankers
-                parseFlankers(currentElement, xmlParser, statManager);
-            }
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDrs())) {
+            // change the direct repeats
+            parseDrs(currentElement, xmlParser, statManager);
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacers())) {
+            // change the spacers
+            parseSpacers(currentElement, xmlParser, statManager);
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFlankers())) {
+            // change the flankers
+            parseFlankers(currentElement, xmlParser, statManager);
         }
     }
 }
+
 void StatTool::parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParser, StatManager * statManager)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDr())) {
-                std::string repeat = TranscodeStr(currentElement->getAttribute(xmlParser.getDrid())).cForm();
-                statManager->addRepLenVec(static_cast<int>(repeat.length()));
-                statManager->incrementRpeatCount();
-            }
-        }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        char * c_repeat = tc(currentElement->getAttribute(xmlParser.getSeq()));
+
+        std::string repeat = c_repeat;
+
+        xr(&c_repeat);
+        statManager->addRepLenVec(static_cast<int>(repeat.length()));
+        statManager->incrementRpeatCount();
     }
-    
 }
+
 void StatTool::parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, StatManager * statManager)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacer())) {
-                std::string spacer = TranscodeStr(currentElement->getAttribute(xmlParser.getSpid())).cForm();
-                std::string cov = TranscodeStr(currentElement->getAttribute(xmlParser.getCov())).cForm();
-                statManager->addSpLenVec(static_cast<int>(spacer.length()));
-                int cov_int;
-                from_string(cov_int, cov, std::dec);
-                statManager->addSpCovVec(cov_int);
-                statManager->incrementSpacerCount();
-            }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+
+        char * c_spacer = tc(currentElement->getAttribute(xmlParser.getSeq()));
+        std::string spacer = c_spacer;
+
+        xr(&c_spacer);
+        statManager->addSpLenVec(static_cast<int>(spacer.length()));
+        char * c_cov = tc(currentElement->getAttribute(xmlParser.getCov()));
+        std::string cov = c_cov;
+        xr(&c_cov);
+        if (!cov.empty()) {
+            int cov_int;
+            from_string(cov_int, cov, std::dec);
+            statManager->addSpCovVec(cov_int);
+            statManager->incrementSpacerCount();
         }
     }
 }
 
 void StatTool::parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, StatManager * statManager)
 {
-    xercesc::DOMNodeList * children = parentNode->getChildNodes();
-    const  XMLSize_t nodeCount = children->getLength();
     
-    // For all nodes, children of "root" in the XML tree.
-    for( XMLSize_t xx = 0; xx < nodeCount; ++xx ) {
-        xercesc::DOMNode * currentNode = children->item(xx);
-        if( currentNode->getNodeType() &&  currentNode->getNodeType() == xercesc::DOMNode::ELEMENT_NODE ) {
-            // Found node which is an Element. Re-cast node as element
-            xercesc::DOMElement* currentElement = dynamic_cast< xercesc::DOMElement* >( currentNode );
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacer())) {
-                std::string flanker = TranscodeStr(currentElement->getAttribute(xmlParser.getFlid())).cForm();
-                statManager->addFlLenVec(static_cast<int>(flanker.length()));
-                statManager->incrementFlankerCount();
-            }
-        }
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+        
+        char * c_flanker = tc(currentElement->getAttribute(xmlParser.getSeq()));
+        std::string flanker = c_flanker;
+        xr(&c_flanker);
+        statManager->addFlLenVec(static_cast<int>(flanker.length()));
+        statManager->incrementFlankerCount();
     }
 }
 
@@ -391,6 +369,32 @@ void StatTool::prettyPrint(StatManager * sm)
     std::cout<<"{ "<<sm->getRpeatCount()<< " " <<sm->getSpacerCount()<<" "<<sm->getFlankerCount()<<" } "<<std::endl;
 }
 
+void StatTool::printTabular(StatManager * sm)
+{
+    std::cout<< sm->getGid()<<'\t';
+    std::cout<< sm->getConcensus()<<'\t';
+    std::cout<< sm->getRpeatCount()<< '\t';
+    std::cout<< sm->meanRepeatL()<<'\t';
+    std::cout<< sm->getSpacerCount()<<'\t';
+    if (!sm->getSpLenVec().empty()) {
+        std::cout<< sm->meanSpacerL()<<'\t';
+    } else {
+        std::cout<<0<<'\t';
+    }
+    if (sm->getSpCovVec().empty()) {
+        std::cout<<0<<'\t';
+    } else {
+        std::cout<< sm->meanSpacerC()<<'\t';
+    }
+    std::cout<< sm->getFlankerCount()<<'\t';
+    if (sm->getFlLenVec().empty()) {
+        std::cout<<0<<std::endl;
+    } else {
+        std::cout<< sm->meanFlankerL()<<std::endl;
+
+    }
+
+}
 
 int statMain (int argc, char ** argv)
 {
