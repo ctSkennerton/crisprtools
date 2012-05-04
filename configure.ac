@@ -1,77 +1,110 @@
-dnl Process this file with autoconf to produce a configure script.
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
 
-AC_INIT(crisprtools, 0.0.1)
-
-AC_CONFIG_HEADERS([config.h])
+AC_PREREQ(2.61)
+AC_INIT(crisprtools, 0.1.4, c.skennerton@gmail.com)
 
 AC_CONFIG_AUX_DIR(build)
-AC_CONFIG_MACRO_DIR(m4)
-AM_INIT_AUTOMAKE([foreign])
-
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/main.cpp])
+AC_CONFIG_HEADER([config.h])
 
+AM_INIT_AUTOMAKE([foreign])
 LT_INIT
 LT_LANG([C++])
+
+# custom defines for config.h
+AC_DEFINE([PACKAGE_FULL_NAME],["Crisprtools"],[Define the full name of the package])
+AC_DEFINE([PACKAGE_MAJOR_VERSION],[0],[Define the major version of the package])
+AC_DEFINE([PACKAGE_MINOR_VERSION],[1],[Define the minor version of the package])
+AC_DEFINE([PACKAGE_REVISION],[4],[Define the revision of the package])
+
 
 # extra configure options
 #
 #
 
-#DEBUG
-AC_ARG_ENABLE([debug],
-    [AS_HELP_STRING([--enable-debug],
-    [Turn on debugging preprocessor flags])],
+# enable rendering of images with graphviz 
+AC_ARG_ENABLE([rendering],
+    [AS_HELP_STRING([--enable-rendering],
+    [Enables images being drawn in the output files])],
     [case "${enableval}" in
-        yes) debug=true ;;
-        no)  debug=false ;;
-        *) AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
-    esac],[debug=false])
+        yes) rendering=true ;;
+        no)  rendering=false ;;
+        *) AC_MSG_ERROR([bad value ${enableval} for --enable-rendering]) ;;
+    esac],[rendering=false])
 
-AM_CONDITIONAL([DEBUG],[test x$debug = xtrue])
 
-if test x$debug = xtrue; then
-    AC_DEFINE([DEBUG],[1],[define to 1 for debug statments])
+#check that graphviz is installed before defining RENDERING
+GV_LIBS=
+GV_BOOL=false
+if test x$rendering = xtrue; then
+    AC_CHECK_PROGS([GV_PROGS], [neato fdp sfdp dot circo twopi], [no])
+    #check that graphviz is installed before defining RENDERING
+    AC_CHECK_LIB([gvc],[gvContext],
+                 [GV_LIBS="-lgvc $GV_LIBS" 
+                  GV_BOOL=true
+                 AC_DEFINE([HAVE_LIBGVC],[1],[Defines to one if the gvc library (-lgvc) is found])],
+                 [GV_BOOL=false])
+    AC_CHECK_LIB([cdt],[dtopen],
+                 [GV_LIBS="-lcdt $GV_LIBS"
+                  GV_BOOL=true
+                  AC_DEFINE([HAVE_LIBCDT],[1],[Defines to one if the cdt library (-lcdt) is found])],
+                 [GV_BOOL=false])
+    AC_CHECK_LIB([graph],[agnode],
+                 [GV_LIBS="-lgraph $GV_LIBS"
+                  GV_BOOL=true
+                  AC_DEFINE([HAVE_LIBGRAPH],[1],[Defines to one if the graph library (-lgraph) is found])],
+                 [GV_BOOL=false])
+    if test x$GV_PROGS != xno; then
+        
+        AC_DEFINE([RENDERING],[1],[Defines to 1 if image rendering is to be performed])
+        AC_DEFINE_UNQUOTED([DEFAULT_RENDERING_ALGORITHM],["${GV_PROGS}"],[Sets the Default Graphviz algorithm])
+    else
+        echo "*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*"
+        echo "None of the Graphviz executables could"
+        echo "be found in your PATH!"
+        echo "Your installation will not conatin"
+        echo "rendering options!"
+        echo "*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*"
+    fi
 fi
+AM_CONDITIONAL([FOUND_GRAPHVIZ_LIBRARIES],[test $GV_BOOL = true])
+AC_SUBST(GV_LIBS)
 
 
+# Checks for different libs, headers, functions & programs
+#
+#
+
+# Checks for compilers.
 
 
 AC_PROG_CXX
+AC_PROG_CC
 
 AX_LIB_XERCES
 if test $HAVE_XERCES = no; then
-    AC_MSG_ERROR([Cannot find Xerces-c])
+AC_MSG_ERROR([Cannot find Xerces-c])
 else
-    AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
+AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
 fi
 
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([fcntl.h limits.h stdlib.h string.h unistd.h getopt.h])
 
+# Check for presence of pdfLaTeX
+AC_CHECK_PROG(PDFLATEX, pdflatex, pdflatex)
+if test -z "$PDFLATEX"; then
+    AC_MSG_WARN([Unable to create PDF version of the user manual.])
+fi
 
-GV_LIBS=yes
-#check that graphviz is installed before defining RENDERING
-AC_CHECK_LIB([gvc],[gvContext],,[$GV_LIBS=no])
-AC_CHECK_LIB([cdt],[dtopen],,[$GV_LIBS=no])
-AC_CHECK_LIB([graph],[agnode],,[$GV_LIBS=no])
+AM_CONDITIONAL([HAVE_PDFLATEX], test -n "$PDFLATEX")
 
-# if we don't have the libraries then check for the executables
-GV_PROG=no
-
-#if test x$GV_LIBS = xno; then
-#    AC_CHECK_PROGS([GV_PROGS], [neato fdp sfdp dot circo twopi], [no])
-#    if test x$GV_PROGS != xno; then
-#        $GV_PROG=yes
-#        AC_DEFINE([GRAPHVIZ_EXECUTABLES_FOUND],[1],[Defines to 1 if image rendering is to be performed])
-#        AC_DEFINE_UNQUOTED([DEFAULT_RENDERING_ALGORITHM],["${GV_PROGS}"],[Sets the Default Graphviz algorithm])
-#    fi
-#fi
-
-AM_CONDITIONAL([FOUND_GRAPHVIZ_LIBRARIES],[test x$GV_LIBS = xyes])
-AM_CONDITIONAL([FOUND_GRAPHVIZ_EXECUTABLES],[test x$GV_PROG = xyes])
-
-AC_CHECK_HEADERS([getopt.h stdlib.h])
 
 # only perform the check if rendering
-if test x$GV_PROG = xyes; then
+if test x$rendering = xtrue; then
     # Checks for Graphviz program neato
     AC_CHECK_PROG([NEATO],[neato],[yes],[no])
     if test x$NEATO = xyes; then
@@ -110,13 +143,4 @@ if test x$GV_PROG = xyes; then
 fi
 
 
-
-
-
-
-
-AC_OUTPUT([
-Makefile
-src/Makefile
-src/libcrispr/Makefile
-])
+AC_OUTPUT(Makefile src/Makefile src/libcrispr/Makefile )

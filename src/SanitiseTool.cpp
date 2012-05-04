@@ -18,7 +18,6 @@
 #include "SanitiseTool.h"
 #include "Exception.h"
 #include "config.h"
-#include "XML.h"
 
 #include <iostream>
 int SanitiseTool::processOptions (int argc, char ** argv)
@@ -72,21 +71,25 @@ int SanitiseTool::processOptions (int argc, char ** argv)
             }
 		}
 	}
+    if (!(ST_contigs | ST_Spacers | ST_Repeats | ST_Flank)) {
+        throw crispr::input_exception("Please specify one of -s -f -d -c");
+    }
 	return optind;
 }
 
 int SanitiseTool::processInputFile(const char * inputFile)
 {
     try {
-        CrassXML xml_parser;
+        crispr::XML xml_parser;
         xercesc::DOMDocument * input_doc_obj = xml_parser.setFileParser(inputFile);
         xercesc::DOMElement * root_elem = input_doc_obj->getDocumentElement();
-        
+        if (!root_elem) {
+            throw crispr::xml_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, "problem when parsing xml file");
+        }
         if (ST_OutputFile.empty()) {
             ST_OutputFile = inputFile;
         }
-        
-        
+
         for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
                 
@@ -116,7 +119,7 @@ int SanitiseTool::processInputFile(const char * inputFile)
     
     return 0;
 }
-void SanitiseTool::parseGroup(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -133,7 +136,7 @@ void SanitiseTool::parseGroup(xercesc::DOMElement * parentNode, CrassXML& xmlPar
     }
 }
 
-void SanitiseTool::parseData(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -155,7 +158,7 @@ void SanitiseTool::parseData(xercesc::DOMElement * parentNode, CrassXML& xmlPars
         }
     }
 }
-void SanitiseTool::parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseDrs(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -172,7 +175,7 @@ void SanitiseTool::parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParse
         
     }
 }
-void SanitiseTool::parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -189,7 +192,7 @@ void SanitiseTool::parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlP
     }
 }
 
-void SanitiseTool::parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -207,7 +210,7 @@ void SanitiseTool::parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xml
     }
 }
 
-void SanitiseTool::parseAssembly(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseAssembly(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -221,7 +224,7 @@ void SanitiseTool::parseAssembly(xercesc::DOMElement * parentNode, CrassXML& xml
     }
 }
 
-void SanitiseTool::parseContig(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseContig(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -241,7 +244,7 @@ void SanitiseTool::parseContig(xercesc::DOMElement * parentNode, CrassXML& xmlPa
     }
 }
 
-void SanitiseTool::parseCSpacer(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseCSpacer(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -265,7 +268,7 @@ void SanitiseTool::parseCSpacer(xercesc::DOMElement * parentNode, CrassXML& xmlP
     }
 }
 
-void SanitiseTool::parseLinkSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseLinkSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -289,7 +292,7 @@ void SanitiseTool::parseLinkSpacers(xercesc::DOMElement * parentNode, CrassXML& 
     }
 }
 
-void SanitiseTool::parseLinkFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser)
+void SanitiseTool::parseLinkFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
 
@@ -338,14 +341,15 @@ int sanitiseMain (int argc, char ** argv)
 
 void sanitiseUsage(void)
 {
-    std::cout<<PACKAGE_NAME<<" sanitise [-ohcsdf] file.crispr"<<std::endl;
+    std::cout<<PACKAGE_NAME<<" sanitise [-ohcsdfa] file.crispr"<<std::endl;
 	std::cout<<"Options:"<<std::endl;
-	std::cout<<"-h					Print this handy help message"<<std::endl;
+	std::cout<<"-h                  Print this handy help message"<<std::endl;
     std::cout<<"-o FILE             Output file name, creates a sanitised copy of the input file  [default: sanitise input file inplace]" <<std::endl; 
-	std::cout<<"-s					Sanitise the spacers "<<std::endl;
-	std::cout<<"-d					Sanitise the direct repeats "<<std::endl;
-	std::cout<<"-f					Sanitise the flanking sequences "<<std::endl;
-	std::cout<<"-c					Sanitise the contigs "<<std::endl;
+    std::cout<<"-a                  Sanitise all features. Equivelent to -sdfc"<<std::endl;
+    std::cout<<"-s                  Sanitise the spacers "<<std::endl;
+	std::cout<<"-d                  Sanitise the direct repeats "<<std::endl;
+	std::cout<<"-f                  Sanitise the flanking sequences "<<std::endl;
+	std::cout<<"-c                  Sanitise the contigs "<<std::endl;
 
     
 

@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "XML.h"
+#include "Xml.h"
 #include "CrisprGraph.h"
 #include "Rainbow.h"
 #include <graphviz/gvc.h>
@@ -25,6 +25,8 @@
 #include <string>
 #include <map>
 
+#ifndef DRAWTOOL_H
+#define DRAWTOOLS_H 
 typedef std::vector<crispr::graph * > graphVector;
 class DrawTool {
     
@@ -104,19 +106,20 @@ public:
     int processOptions(int argc, char ** argv);
     void generateGroupsFromString ( std::string str);
     int processInputFile(const char * inputFile);
-    void parseGroup(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseData(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * current_graph);
-    void parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * current_graph);
-    void parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * current_graph);
-    void parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * current_graph);
+    void parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * current_graph);
+    void parseDrs(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * current_graph);
+    void parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * current_graph);
+    void parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * current_graph);
     
-    void parseAssembly(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * currentGraph);
-    void parseContig(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * currentGraph, std::string& contigId);
-    void parseCSpacer(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, std::string& contigId);
-    void parseLinkSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId);
-    void parseLinkFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId);
+    void parseAssembly(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph);
+    void parseContig(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph, std::string& contigId);
+    void parseCSpacer(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, std::string& contigId);
+    void parseLinkSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId);
+    void parseLinkFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId);
 
 };
 
 int drawMain(int argc, char ** argv);
 void drawUsage(void);
+#endif

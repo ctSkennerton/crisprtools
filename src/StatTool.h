@@ -23,13 +23,25 @@
 #include <vector>
 #include <string>
 #include <set>
-#include "XML.h"
+#include "Xml.h"
 #include "StlExt.h"
 
 
 #define SPACER_CHAR '+'
 #define FLANKER_CHAR '~'
 #define REPEAT_CHAR '-'
+typedef struct __AStats {
+    
+    int total_groups;
+    int total_spacers;
+    int total_dr;
+    int total_flanker;
+    int total_spacer_length;
+    int total_spacer_cov;
+    int total_dr_length;
+    int total_flanker_length;
+    int total_reads;
+    } AStats;
 
 class StatManager {
     std::vector<int> SM_SpacerLength;
@@ -39,6 +51,7 @@ class StatManager {
     int SM_SpacerCount;
     int SM_RepeatCount;
     int SM_FlankerCount;
+    int SM_ReadCount;
     std::string SM_ConsensusRepeat;
     std::string SM_Gid;
     
@@ -48,6 +61,7 @@ public:
         SM_FlankerCount = 0;
         SM_RepeatCount = 0;
         SM_SpacerCount = 0;
+        SM_ReadCount = 0;
     }
     
     inline std::string getConcensus(void){return SM_ConsensusRepeat;}
@@ -56,7 +70,7 @@ public:
     inline int getSpacerCount(void) {return SM_SpacerCount;}
     inline int getRpeatCount(void) {return SM_RepeatCount;}
     inline int getFlankerCount(void) {return SM_FlankerCount;}
-    
+    inline int getReadCount(void) {return SM_ReadCount;}
 
     
     inline void incrementSpacerCount(void) {++SM_SpacerCount;}
@@ -76,7 +90,7 @@ public:
     inline void setSpacerCount(int i) { SM_SpacerCount = i;}
     inline void setRepeatCount(int i) { SM_RepeatCount = i;}
     inline void setFlankerCount(int i) { SM_FlankerCount = i;}
-    
+    inline void setReadCount(int i) {SM_ReadCount = i;}
     // mode
     
     inline int modeSpacerL(void){return mode(SM_SpacerLength);}
@@ -107,42 +121,59 @@ public:
 
 class StatTool {
 
+    enum OUTPUT_STYLE {tabular, pretty, veryPretty};
+    
     std::set<std::string> ST_Groups;
     
     std::vector<StatManager *> ST_StatsVec;
     
-    bool ST_Pretty;
+    //bool ST_Pretty;
     bool ST_AssemblyStats;
     bool ST_Subset;
     std::string ST_OutputFileName;
+    bool ST_WithHeader;
+    bool ST_AggregateStats;
+    //bool ST_Tabular;
+    std::string ST_Separator;
+    OUTPUT_STYLE ST_OutputStyle;
     
 public:
     StatTool() {
 
-        ST_Pretty = false;
+        //ST_Pretty = false;
         ST_Subset = false;
         ST_AssemblyStats = false;
+        ST_WithHeader = false;
+        ST_AggregateStats = false;
+        //ST_Tabular = true;
+        ST_Separator = "\t";
+        ST_OutputStyle = tabular;
     }
     ~StatTool();
 
 
     
-    void generateGroupsFromString(std::string str);
+    //void generateGroupsFromString(std::string str);
     int processOptions(int argc, char ** argv);
     int processInputFile(const char * inputFile);
-    void parseGroup(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseData(xercesc::DOMElement * parentNode, CrassXML& xmlParser, StatManager * statManager);
-    void parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParser, StatManager * statManager);
-    void parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, StatManager * statManager);
-    void parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser, StatManager * statManager);
-    
-//    void parseAssembly(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-//    void parseContig(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-//    void parseCSpacer(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-//    void parseLinkSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-//    void parseLinkFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
+    void parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
+    void parseDrs(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
+    void parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
+    void parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
+    void parseMetadata(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
+    int calculateReads(const char * fileName);
+//    void parseAssembly(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);
+//    void parseContig(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);
+//    void parseCSpacer(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);
+//    void parseLinkSpacers(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);
+//    void parseLinkFlankers(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);
+    void calculateAgregateSTats(AStats * agregateStats);
     void prettyPrint(StatManager * sm);
+    void veryPrettyPrint(StatManager * sm, int longestConsensus, int longestGID);
+    void printHeader(void);
     void printTabular(StatManager * sm);
+    void printAggregate(AStats * agregateStats);
     std::vector<StatManager *>::iterator begin(){return ST_StatsVec.begin();}
     std::vector<StatManager *>::iterator end(){return ST_StatsVec.end();}
 

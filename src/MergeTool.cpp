@@ -16,7 +16,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "MergeTool.h"
-#include "XML.h"
 #include "Exception.h"
 #include "config.h"
 #include <getopt.h>
@@ -74,16 +73,16 @@ int mergeMain (int argc, char ** argv)
             // merge!!
             
             // create a DOM document
-            CrassXML master_DOM;
+            crispr::XML master_DOM;
             int master_DOM_error;
-            xercesc::DOMElement * master_root_elem = master_DOM.createDOMDocument("crass_assem", "1.0", master_DOM_error);
+            xercesc::DOMElement * master_root_elem = master_DOM.createDOMDocument("crispr", "1.0", master_DOM_error);
             if (master_root_elem != NULL && master_DOM_error == 0) {
                 
                 xercesc::DOMDocument * master_doc = master_DOM.getDocumentObj();
                 while (opt_index < argc) {
                     
                     // create a file parser
-                    CrassXML input_file;                    
+                    crispr::XML input_file;                    
                     xercesc::DOMDocument * input_doc = input_file.setFileParser(argv[opt_index]);
                     // Get the top-level element: 
                     xercesc::DOMElement* elementRoot = input_doc->getDocumentElement();

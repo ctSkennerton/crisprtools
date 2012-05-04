@@ -21,13 +21,13 @@
 #define MERGETOOL_H
 #include <set>
 #include <string>
-#include "XML.h"
+#include "Xml.h"
 class MergeTool {
     std::set<std::string> MT_GroupIds;
     bool MT_Sanitise;
     int MT_NextGroupID;
     std::string MT_OutFile;
-    CrassXML MT_MasterDOM;
+    crispr::XML MT_MasterDOM;
     
     
 public:

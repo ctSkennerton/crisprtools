@@ -21,7 +21,7 @@
 #include <map>
 #include <sstream>
 
-#include "XML.h"
+#include "Xml.h"
 
 typedef std::map<std::string, std::string> conversionMap;
 
@@ -118,17 +118,17 @@ public:
     
     int processOptions(int argc, char ** argv);
     int processInputFile(const char * inputFile);
-    void parseGroup(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseData(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseDrs(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
+    void parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseDrs(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
     
-    void parseAssembly(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseContig(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseCSpacer(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseLinkSpacers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
-    void parseLinkFlankers(xercesc::DOMElement * parentNode, CrassXML& xmlParser);
+    void parseAssembly(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseContig(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseCSpacer(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseLinkSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+    void parseLinkFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
 };
 
 
