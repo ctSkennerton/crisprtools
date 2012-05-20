@@ -75,11 +75,13 @@ int ExtractTool::processOptions (int argc, char ** argv)
     int index;
     static struct option long_options [] = {       
         {"help", no_argument, NULL, 'h'},
-        {"header", required_argument, NULL, 'H'},
+        {"header-prefix", required_argument, NULL, 'H'},
         {"groups",required_argument, NULL, 'g'},
         {"spacer",optional_argument,NULL,'s'},
         {"direct-repeat", optional_argument, NULL, 'd'},
-        {"flanker", optional_argument, NULL, 'f'}
+        {"flanker", optional_argument, NULL, 'f'},
+        {"split-group", no_argument, NULL, 'x'},
+        {0,0,0,0}
     };
 	while((c = getopt_long(argc, argv, "hH:g:Cs::d::f::xyo:O:", long_options, &index)) != -1)
 	{
@@ -294,6 +296,8 @@ void ExtractTool::parseWantedGroups(crispr::XML& xmlObj, xercesc::DOMElement * r
     } catch (crispr::xml_exception& xe) {
         std::cerr<< xe.what()<<std::endl;
         return;
+    } catch (std::exception& e) {
+        std::cerr<<e.what()<<std::endl;
     }
 }
 
@@ -423,22 +427,25 @@ int extractMain (int argc, char ** argv)
 
 void extractUsage (void)
 {
-	std::cout<<PACKAGE_NAME<<" extract [-ghxsdfCoOH] file.crispr"<<std::endl;
-	std::cout<<"Options:"<<std::endl;
-	std::cout<<"-h					print this handy help message"<<std::endl;
-    std::cout<<"-o DIR              output file directory  [default: .]" <<std::endl; 
-    std::cout<<"-O STRING           Give a custom prefix to each of the outputed files [default: ""]"<<std::endl;
-    std::cout<<"-g INT[,INT]        A comma separated list of group IDs that you would like to extract data from."<<std::endl;
-	std::cout<<"					Note that only the group number is needed, do not use prefixes like 'Group' or 'G', which"<<std::endl;
-	std::cout<<"					are sometimes used in file names or in a .crispr file"<<std::endl;
-	std::cout<<"-s                  Extract the spacers of the listed group"<<std::endl;
-	std::cout<<"-d					Extract the direct repeats of the listed group"<<std::endl;
-	std::cout<<"-f					Extract the flanking sequences of the listed group"<<std::endl;
-    std::cout<<"-C                  Supress coverage information when printing spacers"<<std::endl;
-    std::cout<<"-H STRING           Print a prefix to each of the headers [default: ""]"<<std::endl;
-    std::cout<<"-x					Split the results into different files for each group.  File names"<<std::endl;
-    std::cout<<"                    specified with -s -d -f will not be used in this mode but instead\n";
-    std::cout<<"                    output files will take the form of PREFIX_GROUP_[type].fa"<<std::endl;
+	std::cout<<PACKAGE_NAME<<" extract [-ghxsdfCoOH] file.crispr\n";
+	std::cout<<"Options:\n";
+	std::cout<<"-h					             print this handy help message\n";
+    std::cout<<"-o DIR                           output file directory  [default: .]\n"; 
+    std::cout<<"-O STRING                        Give a custom prefix to each of the outputed files [default: ""]\n";
+    std::cout<<"-g INT[,INT]                     A comma separated list of group IDs that you would like to extract data from.\n";
+	std::cout<<"					             Note that only the group number is needed, do not use prefixes like 'Group' or 'G', which\n";
+	std::cout<<"					             are sometimes used in file names or in a .crispr file\n";
+	std::cout<<"-s[FILE] --spacer[=FILE]         Extract the spacers of the listed group.  By default\n";
+    std::cout<<"                                 prints to stdout however an output file can also be given as an optional arguement\n";
+	std::cout<<"-d[FILE] --direct-repeat[=FILE]	 Extract the direct repeats of the listed group. By default\n";
+    std::cout<<"                                 prints to stdout however an output file can also be given as an optional arguement\n";
+	std::cout<<"-f[FILE] --flanker[=FILE]        Extract the flanking sequences of the listed group. By default\n";
+    std::cout<<"                                 prints to stdout however an output file can also be given as an optional arguement\n";
+    std::cout<<"-C                               Supress coverage information when printing spacers"<<std::endl;
+    std::cout<<"-H STRING --header-prefix STRING Print a prefix to each of the headers [default: ""]"<<std::endl;
+    std::cout<<"-x --split-group                 Split the results into different files for each group.  File names"<<std::endl;
+    std::cout<<"                                 specified with -s -d -f will not be used in this mode but instead\n";
+    std::cout<<"                                 output files will take the form of PREFIX_GROUP_[type].fa"<<std::endl;
 }
 				
 				

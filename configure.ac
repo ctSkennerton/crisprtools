@@ -13,12 +13,6 @@ AM_INIT_AUTOMAKE([foreign])
 LT_INIT
 LT_LANG([C++])
 
-# custom defines for config.h
-AC_DEFINE([PACKAGE_FULL_NAME],["Crisprtools"],[Define the full name of the package])
-AC_DEFINE([PACKAGE_MAJOR_VERSION],[0],[Define the major version of the package])
-AC_DEFINE([PACKAGE_MINOR_VERSION],[1],[Define the minor version of the package])
-AC_DEFINE([PACKAGE_REVISION],[4],[Define the revision of the package])
-
 
 # extra configure options
 #
