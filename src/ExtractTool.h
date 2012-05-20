@@ -46,6 +46,10 @@ public:
     void extractDataFromGroup(crispr::XML& xmlDoc, xercesc::DOMElement * currentGroup);
     void processData(crispr::XML& xmlDoc, xercesc::DOMElement * currentType, ELEMENT_TYPE wantedType, std::string gid, std::ostream& outStream);
 private:
+        
+    void closeStream();
+    void openStream(std::string& groupId);
+    
         std::set<std::string> ET_Group;             // holds a comma separated list of groups that need to be extracted
         std::ofstream ET_RepeatStream;
         std::ofstream ET_FlankerStream;

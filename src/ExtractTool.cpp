@@ -106,12 +106,10 @@ int ExtractTool::processOptions (int argc, char ** argv)
 			case 'g':
 			{
                 if(fileOrString(optarg)) {
-                    // its a file
                     parseFileForGroups(ET_Group, optarg);
                     //ST_Subset = true;
                     
                 } else {
-                    // its a string 
                     generateGroupsFromString(optarg, ET_Group);
                 }
                 ET_BitMask.set(0);
@@ -217,7 +215,30 @@ int ExtractTool::processInputFile(const char * inputFile)
 
     return 0;
 }
-
+void ExtractTool::closeStream()
+{
+    if (ET_BitMask[4]) {
+        ET_SpacerStream.close();
+    }
+    if (ET_BitMask[5]) {
+        ET_RepeatStream.close();
+    }
+    if (ET_BitMask[3]) {
+        ET_FlankerStream.close();
+    }
+}
+void ExtractTool::openStream(std::string& groupId)
+{
+    if (ET_BitMask[4]) {
+        ET_SpacerStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ groupId + "_spacers.fa").c_str());
+    }
+    if (ET_BitMask[5]) {
+        ET_RepeatStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ groupId + "_direct_repeats.fa").c_str());
+    }
+    if (ET_BitMask[3]) {
+        ET_FlankerStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ groupId + "_flankers.fa").c_str());
+    }
+}
 void ExtractTool::parseWantedGroups(crispr::XML& xmlObj, xercesc::DOMElement * rootElement)
 {
     
@@ -228,64 +249,30 @@ void ExtractTool::parseWantedGroups(crispr::XML& xmlObj, xercesc::DOMElement * r
             if(ET_BitMask[0] && num_groups_to_process == 0) {
                 break;
             }
-            
-            // is this a group element
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlObj.getGroup())) {
-                // new group
-                char * c_group_id = tc(currentElement->getAttribute(xmlObj.getGid()));
-                std::string group_id = c_group_id;
-                if (ET_BitMask[0]) {
-                    
-                    // we only want some of the groups look at ET_Groups
-                    if (ET_Group.find(group_id.substr(1)) != ET_Group.end() ) {
-                        if (ET_BitMask[2]) {
-                            if (ET_BitMask[4]) {
-                                ET_SpacerStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ group_id + "_spacers.fa").c_str());
-                            }
-                            if (ET_BitMask[5]) {
-                                ET_RepeatStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ group_id + "_direct_repeats.fa").c_str());
-                            }
-                            if (ET_BitMask[3]) {
-                                ET_FlankerStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ group_id + "_flankers.fa").c_str());
-                            }
-                        }
-                        
-                        // matches to one of our wanted groups
-                        extractDataFromGroup(xmlObj, currentElement);
-                        if(ET_BitMask[0]) num_groups_to_process--;
-                    } 
-                    xr(&c_group_id);
-                } else {
-                    if (ET_BitMask[2]) {
-                        if (ET_BitMask[4]) {
-                            ET_SpacerStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ group_id + "_spacers.fa").c_str());
-                        }
-                        if (ET_BitMask[5]) {
-                            ET_RepeatStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ group_id + "_direct_repeats.fa").c_str());
-                        }
-                        if (ET_BitMask[3]) {
-                            ET_FlankerStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ group_id + "_flankers.fa").c_str());
-                        }
-                    }
-                    extractDataFromGroup(xmlObj, currentElement);
-                    if(ET_BitMask[0]) num_groups_to_process--;
-                    
-                    if(ET_BitMask[2]) {
-                        // we are only spliting on type make three generic files
-                        if (ET_BitMask[4]) {
-                            ET_SpacerStream.close();
-                        }
-                        if (ET_BitMask[5]) {
-                            ET_RepeatStream.close();
-                        }
-                        if (ET_BitMask[3]) {
-                            ET_FlankerStream.close();
-                        }
-                    }
+            // new group
+            char * c_group_id = tc(currentElement->getAttribute(xmlObj.getGid()));
+            std::string group_id = c_group_id;
+            xr(&c_group_id);
+            if (ET_BitMask[0]) {
+                // we only want some of the groups look at ET_Groups
+                if (ET_Group.find(group_id.substr(1)) == ET_Group.end() ) {
+                    continue;
                 }
+                
+                if (ET_BitMask[2]) openStream(group_id);
+                
+                extractDataFromGroup(xmlObj, currentElement);
+                
+                if(ET_BitMask[0]) num_groups_to_process--;
+                
+                if(ET_BitMask[2]) closeStream();
+            } else {
+                if (ET_BitMask[2]) openStream(group_id);
+                
+                extractDataFromGroup(xmlObj, currentElement);
+                
+                if(ET_BitMask[2]) closeStream();
             }
-            // reduse the number of groups to look for 
-            // if the subset option is set
         }
     } catch( xercesc::XMLException& e ) {
         char* message = xercesc::XMLString::transcode( e.getMessage() );

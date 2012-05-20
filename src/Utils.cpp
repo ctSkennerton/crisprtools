@@ -96,5 +96,5 @@ void parseFileForGroups(std::set<std::string>& groups, const char * filePath) {
 }
 
 void generateGroupsFromString(std::string str, std::set<std::string>& groups) {
-    split(str, groups);
+    split(str, groups, ",");
 }
