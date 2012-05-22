@@ -24,7 +24,7 @@
 #include <iostream>
 #include <fstream>
 #include <bitset>
-#include "Xml.h"
+#include <libcrispr/Xml.h>
 
 class ExtractTool 
 {
@@ -42,9 +42,9 @@ public:
     void setOutputBuffer(std::ofstream& out, const char * file);
     // process the input
     int processInputFile(const char * inputFile);
-    void parseWantedGroups(crispr::XML& xmlObj, xercesc::DOMElement * rootElement);
-    void extractDataFromGroup(crispr::XML& xmlDoc, xercesc::DOMElement * currentGroup);
-    void processData(crispr::XML& xmlDoc, xercesc::DOMElement * currentType, ELEMENT_TYPE wantedType, std::string gid, std::ostream& outStream);
+    void parseWantedGroups(crispr::xml::base& xmlObj, xercesc::DOMElement * rootElement);
+    void extractDataFromGroup(crispr::xml::base& xmlDoc, xercesc::DOMElement * currentGroup);
+    void processData(crispr::xml::base& xmlDoc, xercesc::DOMElement * currentType, ELEMENT_TYPE wantedType, std::string gid, std::ostream& outStream);
 private:
         
     void closeStream();

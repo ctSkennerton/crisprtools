@@ -23,8 +23,8 @@
 #include <vector>
 #include <string>
 #include <set>
-#include "Xml.h"
-#include "StlExt.h"
+#include <libcrispr/Xml.h>
+#include <libcrispr/StlExt.h>
 
 
 #define SPACER_CHAR '+'
@@ -156,12 +156,12 @@ public:
     //void generateGroupsFromString(std::string str);
     int processOptions(int argc, char ** argv);
     int processInputFile(const char * inputFile);
-    void parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
-    void parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
-    void parseDrs(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
-    void parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
-    void parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
-    void parseMetadata(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager);
+    void parseGroup(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);
+    void parseData(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, StatManager * statManager);
+    void parseDrs(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, StatManager * statManager);
+    void parseSpacers(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, StatManager * statManager);
+    void parseFlankers(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, StatManager * statManager);
+    void parseMetadata(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, StatManager * statManager);
     int calculateReads(const char * fileName);
 //    void parseAssembly(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);
 //    void parseContig(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);

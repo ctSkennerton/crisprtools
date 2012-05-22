@@ -16,9 +16,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "FilterTool.h"
-#include "Exception.h"
+#include <libcrispr/Exception.h>
 #include "config.h"
-#include "StlExt.h"
+#include <libcrispr/StlExt.h>
 #include <iostream>
 
 int FilterTool::processOptions (int argc, char ** argv)
@@ -81,36 +81,59 @@ int FilterTool::processOptions (int argc, char ** argv)
 int FilterTool::processInputFile(const char * inputFile)
 {
     try {
-        crispr::XML xml_parser;
+        crispr::xml::writer output_xml;
+        int output_error;
+        xercesc::DOMElement * output_root_elem = output_xml.createDOMDocument("crispr", "1.1", output_error);
+        if(output_error && NULL == output_root_elem) {
+            throw crispr::xml_exception(__FILE__, 
+                                        __LINE__,
+                                        __PRETTY_FUNCTION__,
+                                        "Cannot create output xml file");
+        }
+        
+        crispr::xml::reader xml_parser;
         xercesc::DOMDocument * input_doc_obj = xml_parser.setFileParser(inputFile);
         xercesc::DOMElement * root_elem = input_doc_obj->getDocumentElement();
         if (!root_elem) {
-            throw crispr::xml_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, "problem when parsing xml file");
+            throw crispr::xml_exception(__FILE__, 
+                                        __LINE__, 
+                                        __PRETTY_FUNCTION__, 
+                                        "problem when parsing xml file");
         }
         if (FT_OutputFile.empty()) {
             FT_OutputFile = inputFile;
         }
         
-        std::vector<xercesc::DOMElement * > bad_children;
+        std::vector<xercesc::DOMElement * > good_children;
 
-        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); 
+             currentElement != NULL; 
+             currentElement = currentElement->getNextElementSibling()) {
                 
             // the user wants to change any of these 
-            if (FT_Spacers || FT_Repeats || FT_Flank || FT_contigs) {
-                if (parseGroup(currentElement, xml_parser)) {
-                    bad_children.push_back(currentElement);
+            if (FT_Spacers || FT_Repeats || FT_Flank) {
+                if (! parseGroup(currentElement, xml_parser)) {
+                    good_children.push_back(currentElement);
                 }
             }
         }
-        std::vector<xercesc::DOMElement * >::iterator iter = bad_children.begin();
-        while (iter != bad_children.end()) {
-            root_elem->removeChild(*iter);
+        std::vector<xercesc::DOMElement * >::iterator iter = good_children.begin();
+        xercesc::DOMDocument * output_document = output_xml.getDocumentObj();
+        while (iter != good_children.end()) {
+            output_root_elem->appendChild(output_document->importNode(*iter, true));
             iter++;
         }
 
-        xml_parser.printDOMToFile(FT_OutputFile, input_doc_obj);
+        output_xml.printDOMToFile(FT_OutputFile, output_document);
     } catch (crispr::xml_exception& e) {
         std::cerr<<e.what()<<std::endl;
+        return 1;
+    } catch (xercesc::DOMException& e) {
+        char * c_msg = tc(e.getMessage());
+        XERCES_STD_QUALIFIER cerr << "An error occurred during creation of output transcoder. Msg is:"
+        << XERCES_STD_QUALIFIER endl
+        << c_msg << XERCES_STD_QUALIFIER endl;
+        xr(&c_msg);
         return 1;
     }
     
@@ -118,39 +141,47 @@ int FilterTool::processInputFile(const char * inputFile)
 }
 
 // return true if group should be removed
-bool FilterTool::parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
+bool FilterTool::parseGroup(xercesc::DOMElement * parentNode, 
+                            crispr::xml::reader& xmlParser)
 {
     // get the data tag and make sure that everything is good
     xercesc::DOMElement * currentElement = parentNode->getFirstElementChild();
     if (NULL != currentElement) {
-        if (FT_Spacers || FT_Repeats || FT_Flank) {
-            return parseData(currentElement, xmlParser);             
-        }
-    } 
-    return false;
+
+        return parseData(currentElement, xmlParser);             
+
+    } else {
+        throw crispr::xml_exception(__FILE__,
+                                    __LINE__,
+                                    __PRETTY_FUNCTION__,
+                                    "There is no Data");
+    }
 }
 
 
 // return true if group should be removed
-bool FilterTool::parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
+bool FilterTool::parseData(xercesc::DOMElement * parentNode, 
+                           crispr::xml::reader& xmlParser)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
         
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDrs())) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Drs())) {
             if (FT_Repeats) {
                 // change the direct repeats
                 if (FT_Repeats > parseDrs(currentElement)) {
                     return true;
                 }
             }
-        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacers())) {
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Spacers())) {
             if (FT_Spacers) {
                 // change the spacers
                 if (FT_Spacers > parseSpacers(currentElement)) {
                     return true;
                 }
             }
-        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFlankers())) {
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Flankers())) {
             if (FT_Flank) {
                 // change the flankers
                 if ( FT_Flank > parseFlankers(currentElement)) {
@@ -161,35 +192,18 @@ bool FilterTool::parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlPar
     }
     return false;
 }
-int FilterTool::parseDrs(xercesc::DOMElement * parentNode)
+int FilterTool::countElements(xercesc::DOMElement * parentNode)
 {
     int count = 0; 
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-        
-        ++count;
-    }
-    return count;
-}
-int FilterTool::parseSpacers(xercesc::DOMElement * parentNode)
-{
-    int count = 0;
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
         
         ++count;
     }
     return count;
 }
 
-int FilterTool::parseFlankers(xercesc::DOMElement * parentNode)
-{
-    int count = 0;
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-        
-        ++count;
-        
-    }
-    return count;
-}
 int filterMain (int argc, char ** argv)
 {
     try {

@@ -36,13 +36,13 @@
 #define crisprtools_RemoveTool_h
 #include <string>
 #include <set>
-#include "Xml.h"
+#include <libcrispr/Xml.h>
 
 int removeMain(int argc, char ** argv);
 void removeUsage(void);
 int processRemoveOptions(int argc, char ** argv, std::set<std::string>& groups, std::string& outputFile, bool& remove );
-void removeAssociatedData(xercesc::DOMElement * groupElement, crispr::XML& xmlParser);
-void parseMetadata(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
+void removeAssociatedData(xercesc::DOMElement * groupElement, crispr::xml::writer& xmlParser);
+void parseMetadata(xercesc::DOMElement * parentNode, crispr::xml::writer& xmlParser);
 
 
 

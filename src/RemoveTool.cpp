@@ -35,8 +35,8 @@
 #include <iostream>
 #include <cstdio>
 #include "RemoveTool.h"
-#include "Exception.h"
-#include "StlExt.h"
+#include <libcrispr/Exception.h>
+#include <libcrispr/StlExt.h>
 #include "config.h"
 #include "Utils.h"
 
@@ -53,22 +53,25 @@ int removeMain(int argc, char ** argv)
             throw crispr::input_exception("Please specify an input file");
         }
         
-        crispr::XML xml_obj;
+        crispr::xml::parser xml_obj;
 
         xercesc::DOMDocument * xml_doc = xml_obj.setFileParser(argv[opt_index]);
         
         xercesc::DOMElement * root_elem = xml_doc->getDocumentElement();
         
-        if( !root_elem ) throw(crispr::xml_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, "empty XML document" ));
+        if( !root_elem ) throw(crispr::xml_exception(__FILE__, 
+                                                     __LINE__, 
+                                                     __PRETTY_FUNCTION__, 
+                                                     "empty XML document" ));
 
         // get the children
-        //xercesc::DOMNodeList * children = root_elem->getChildNodes();
-        //const  XMLSize_t nodeCount = children->getLength();
         std::vector<xercesc::DOMElement * > bad_children;
-        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xml_obj.getGroup())) {
+        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); 
+             currentElement != NULL; 
+             currentElement = currentElement->getNextElementSibling()) {
+            if (xercesc::XMLString::equals(currentElement->getTagName(), xml_obj.tag_Group())) {
                 // new group
-                char * c_group_id = tc(currentElement->getAttribute(xml_obj.getGid()));
+                char * c_group_id = tc(currentElement->getAttribute(xml_obj.attr_Gid()));
                 std::string group_id = c_group_id;
                 if (groups.find(group_id.substr(1)) != groups.end() ) {
                     bad_children.push_back(currentElement);
@@ -95,13 +98,19 @@ int removeMain(int argc, char ** argv)
         char * message = xercesc::XMLString::transcode( e.getMessage() );
         std::ostringstream errBuf;
         errBuf << "Error parsing file: " << message << std::flush;
-        throw (crispr::xml_exception(__FILE__, __LINE__,__PRETTY_FUNCTION__,(errBuf.str()).c_str()));
+        throw (crispr::xml_exception(__FILE__, 
+                                     __LINE__,
+                                     __PRETTY_FUNCTION__,
+                                     (errBuf.str()).c_str()));
         xercesc::XMLString::release( &message );
     } catch (xercesc::DOMException& e) {
         char * message = xercesc::XMLString::transcode( e.getMessage() );
         std::ostringstream errBuf;
         errBuf << "Error parsing file: " << message << std::flush;
-        throw (crispr::xml_exception(__FILE__, __LINE__,__PRETTY_FUNCTION__,(errBuf.str()).c_str()));
+        throw (crispr::xml_exception(__FILE__, 
+                                     __LINE__,
+                                     __PRETTY_FUNCTION__,
+                                     (errBuf.str()).c_str()));
         xercesc::XMLString::release( &message );
     } catch (crispr::xml_exception& xe) {
         std::cerr<< xe.what()<<std::endl;
@@ -114,19 +123,25 @@ int removeMain(int argc, char ** argv)
     return 0;
 }
 
-void removeAssociatedData(xercesc::DOMElement * groupElement, crispr::XML& xmlParser)
+void removeAssociatedData(xercesc::DOMElement * groupElement, 
+                          crispr::xml::writer& xmlParser)
 {
-    for (xercesc::DOMElement * currentElement = groupElement->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getMetadata())) {
+    for (xercesc::DOMElement * currentElement = groupElement->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Metadata())) {
             parseMetadata(currentElement, xmlParser);
         }
     }
 }
 
-void parseMetadata(xercesc::DOMElement * parentNode, crispr::XML& xmlParser) {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFile())) {
-            char * c_url = tc(currentElement->getAttribute(xmlParser.getUrl()));
+void parseMetadata(xercesc::DOMElement * parentNode, 
+                   crispr::xml::writer& xmlParser) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_File())) {
+            char * c_url = tc(currentElement->getAttribute(xmlParser.attr_Url()));
             if (remove(c_url)) {
                 perror("Cannot remove file");
             }

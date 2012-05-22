@@ -1,13 +1,9 @@
 ## Process this file with automake to produce Makefile.in
-SUBDIRS = libcrispr
-
-INCLUDES = \
-	-I$(top_srcdir)/src/libcrispr
 
 bin_PROGRAMS = crisprtools
-crisprtools_CXXFLAGS = @XERCES_CPPFLAGS@ -Werror -Wall -pedantic
-crisprtools_LDADD = $(top_builddir)/src/libcrispr/libcrispr.la
-crisprtools_LDFLAGS = @GV_LIBS@
+crisprtools_CXXFLAGS = @LIBCRISPR_CPPFLAGS@ -Werror -Wall -pedantic
+crisprtools_LDFLAGS = @LIBCRISPR_LD_FLAGS@
+crisprtools_LDFLAGS = @GV_LIBS@ @LIBCRISPR_LIBS@
 crisprtools_SOURCES = \
 	main.cpp \
 	MergeTool.cpp \
@@ -30,7 +26,7 @@ crisprtools_SOURCES = \
 	RemoveTool.cpp 
     
 if FOUND_GRAPHVIZ_LIBRARIES
-crisprtools_SOURCES += DrawTool.cpp DrawTool.h CrisprGraph.cpp CrisprGraph.h
+crisprtools_SOURCES += DrawTool.cpp DrawTool.h CrisprGraph.cpp CrisprGraph.h 
 endif
 
 

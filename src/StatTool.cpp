@@ -16,9 +16,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "StatTool.h"
-#include "StlExt.h"
 #include "config.h"
-#include "Exception.h"
+#include <libcrispr/Exception.h>
 #include "Utils.h"
 #include <iostream>
 #include <fstream>
@@ -115,7 +114,7 @@ int StatTool::processOptions (int argc, char ** argv)
 int StatTool::processInputFile(const char * inputFile)
 {
     try {
-        crispr::XML xml_parser;
+        crispr::xml::reader xml_parser;
         std::ifstream in_file_stream(inputFile);
         if (in_file_stream.good()) {
             in_file_stream.close();
@@ -132,14 +131,16 @@ int StatTool::processInputFile(const char * inputFile)
         }
         int num_groups_to_process = static_cast<int>(ST_Groups.size());
         //std::cout<<num_groups_to_process<<std::endl;
-        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild();
+             currentElement != NULL; 
+             currentElement = currentElement->getNextElementSibling()) {
 
             if (ST_Subset && num_groups_to_process == 0) {
                 break;
             }
             // is this a group element
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xml_parser.getGroup())) {
-                char * c_gid = tc(currentElement->getAttribute(xml_parser.getGid()));
+            if (xercesc::XMLString::equals(currentElement->getTagName(), xml_parser.tag_Group())) {
+                char * c_gid = tc(currentElement->getAttribute(xml_parser.attr_Gid()));
                 std::string group_id = c_gid;
                 if (ST_Subset) {
                     // we only want some of the groups look at DT_Groups
@@ -165,6 +166,7 @@ int StatTool::processInputFile(const char * inputFile)
         agregate_stats.total_spacer_cov = 0;
         agregate_stats.total_dr_length = 0;
         agregate_stats.total_flanker_length = 0;
+        agregate_stats.total_reads = 0;
         // go through each of the groups and print out a pretty picture
         std::vector<StatManager *>::iterator iter = this->begin();
         int longest_consensus = 0;
@@ -206,65 +208,70 @@ int StatTool::processInputFile(const char * inputFile)
         std::cerr<<c_msg<<std::endl;
         xr(&c_msg);
         return 1;
-    } catch (crispr::xml_exception& e) {
-        std::cerr<<e.what()<<std::endl;
-        return 1;
-    } catch (crispr::input_exception& e) {
-        std::cerr<<e.what()<<std::endl;
-        return 1;
-    } catch (crispr::exception& e) {
+    }  catch (crispr::exception& e) {
         std::cerr<<e.what()<<std::endl;
         return 1;
     }
     return 0;
 }
-void StatTool::parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
+void StatTool::parseGroup(xercesc::DOMElement * parentNode, 
+                          crispr::xml::base& xmlParser)
 {
     
     StatManager * sm = new StatManager();
     ST_StatsVec.push_back(sm);
-    char * c_cons = tc(parentNode->getAttribute(xmlParser.getDrseq()));
+    char * c_cons = tc(parentNode->getAttribute(xmlParser.attr_Drseq()));
     std::string concensusRepeat =c_cons;
     sm->setConcensus(concensusRepeat);
     xr(&c_cons);
 
-    char * c_gid = tc(parentNode->getAttribute(xmlParser.getGid()));
+    char * c_gid = tc(parentNode->getAttribute(xmlParser.attr_Gid()));
     std::string gid = c_gid;
     xr(&c_gid);
     sm->setGid(gid);
     
     
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getData())) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Data())) {
             parseData(currentElement, xmlParser, sm);
-        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getMetadata())) {
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Metadata())) {
             parseMetadata(currentElement, xmlParser, sm);
         }
     }
 }
 
-void StatTool::parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager)
+void StatTool::parseData(xercesc::DOMElement * parentNode, 
+                         crispr::xml::base& xmlParser, 
+                         StatManager * statManager)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDrs())) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Drs())) {
             // change the direct repeats
             parseDrs(currentElement, xmlParser, statManager);
-        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacers())) {
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Spacers())) {
             // change the spacers
             parseSpacers(currentElement, xmlParser, statManager);
-        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFlankers())) {
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Flankers())) {
             // change the flankers
             parseFlankers(currentElement, xmlParser, statManager);
         }
     }
 }
 
-void StatTool::parseDrs(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager)
+void StatTool::parseDrs(xercesc::DOMElement * parentNode, 
+                        crispr::xml::base& xmlParser, 
+                        StatManager * statManager)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        char * c_repeat = tc(currentElement->getAttribute(xmlParser.getSeq()));
+        char * c_repeat = tc(currentElement->getAttribute(xmlParser.attr_Seq()));
 
         std::string repeat = c_repeat;
 
@@ -274,15 +281,19 @@ void StatTool::parseDrs(xercesc::DOMElement * parentNode, crispr::XML& xmlParser
     }
 }
 
-void StatTool::parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager)
+void StatTool::parseSpacers(xercesc::DOMElement * parentNode, 
+                            crispr::xml::base& xmlParser, 
+                            StatManager * statManager)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        char * c_spacer = tc(currentElement->getAttribute(xmlParser.getSeq()));
+        char * c_spacer = tc(currentElement->getAttribute(xmlParser.attr_Seq()));
         std::string spacer = c_spacer;
         xr(&c_spacer);
         statManager->addSpLenVec(static_cast<int>(spacer.length()));
-        char * c_cov = tc(currentElement->getAttribute(xmlParser.getCov()));
+        char * c_cov = tc(currentElement->getAttribute(xmlParser.attr_Cov()));
         std::string cov = c_cov;
         xr(&c_cov);
         if (!cov.empty()) {
@@ -294,12 +305,16 @@ void StatTool::parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlPa
     }
 }
 
-void StatTool::parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager)
+void StatTool::parseFlankers(xercesc::DOMElement * parentNode, 
+                             crispr::xml::base& xmlParser, 
+                             StatManager * statManager)
 {
     
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
         
-        char * c_flanker = tc(currentElement->getAttribute(xmlParser.getSeq()));
+        char * c_flanker = tc(currentElement->getAttribute(xmlParser.attr_Seq()));
         std::string flanker = c_flanker;
         xr(&c_flanker);
         statManager->addFlLenVec(static_cast<int>(flanker.length()));
@@ -307,12 +322,16 @@ void StatTool::parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlP
     }
 }
 
-void StatTool::parseMetadata(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, StatManager * statManager) {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFile())) {
-            char * c_type_attr = tc(currentElement->getAttribute(xmlParser.getType()));
+void StatTool::parseMetadata(xercesc::DOMElement * parentNode, 
+                             crispr::xml::base& xmlParser, 
+                             StatManager * statManager) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_File())) {
+            char * c_type_attr = tc(currentElement->getAttribute(xmlParser.attr_Type()));
             if (! strcmp(c_type_attr, "sequence")) {
-                char * c_url = tc(currentElement->getAttribute(xmlParser.getUrl()));
+                char * c_url = tc(currentElement->getAttribute(xmlParser.attr_Url()));
                 statManager->setReadCount(calculateReads(c_url));
                 xr(&c_url);
             }
