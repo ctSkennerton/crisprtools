@@ -135,4 +135,4 @@ if test x$rendering = xtrue; then
 fi
 
 
-AC_OUTPUT(Makefile src/Makefile )
+AC_OUTPUT(Makefile src/Makefile man/Makefile)

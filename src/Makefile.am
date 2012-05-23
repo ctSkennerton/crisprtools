@@ -2,8 +2,7 @@
 
 bin_PROGRAMS = crisprtools
 crisprtools_CXXFLAGS = @LIBCRISPR_CPPFLAGS@ -Werror -Wall -pedantic
-crisprtools_LDFLAGS = @LIBCRISPR_LD_FLAGS@
-crisprtools_LDFLAGS = @GV_LIBS@ @LIBCRISPR_LIBS@
+crisprtools_LDFLAGS = @LIBCRISPR_LDFLAGS@ @GV_LIBS@ @LIBCRISPR_LIBS@
 crisprtools_SOURCES = \
 	main.cpp \
 	MergeTool.cpp \
