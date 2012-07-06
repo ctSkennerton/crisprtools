@@ -17,9 +17,8 @@
 #include "ExtractTool.h"
 #include "Utils.h"
 #include "config.h"
-#include "Exception.h"
-
-#include "StlExt.h"
+#include <libcrispr/Exception.h>
+#include <libcrispr/StlExt.h>
 #include <getopt.h>
 #include <string>
 #include <iostream>
@@ -193,13 +192,16 @@ int ExtractTool::processOptions (int argc, char ** argv)
 int ExtractTool::processInputFile(const char * inputFile)
 {
     // open the file
-    crispr::XML xml_obj;
+    crispr::xml::reader xml_obj;
     try {
         xercesc::DOMDocument * xml_doc = xml_obj.setFileParser(inputFile);
         
         xercesc::DOMElement * root_elem = xml_doc->getDocumentElement();
         
-        if( !root_elem ) throw(crispr::xml_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, "empty XML document" ));
+        if( !root_elem ) throw(crispr::xml_exception(__FILE__, 
+                                                     __LINE__, 
+                                                     __PRETTY_FUNCTION__, 
+                                                     "empty XML document" ));
         
         parseWantedGroups(xml_obj, root_elem);
         
@@ -208,7 +210,10 @@ int ExtractTool::processInputFile(const char * inputFile)
         std::ostringstream errBuf;
         errBuf << "Error parsing file: " << message << std::flush;
         xercesc::XMLString::release( &message );
-        throw (crispr::xml_exception(__FILE__, __LINE__,__PRETTY_FUNCTION__,(errBuf.str()).c_str()));
+        throw (crispr::xml_exception(__FILE__, 
+                                     __LINE__,
+                                     __PRETTY_FUNCTION__,
+                                     (errBuf.str()).c_str()));
         
     } catch (crispr::xml_exception& xe) {
         std::cerr<< xe.what()<<std::endl;
@@ -241,18 +246,21 @@ void ExtractTool::openStream(std::string& groupId)
         ET_FlankerStream.open((ET_OutputPrefix +ET_OutputNamePrefix+ groupId + "_flankers.fa").c_str());
     }
 }
-void ExtractTool::parseWantedGroups(crispr::XML& xmlObj, xercesc::DOMElement * rootElement)
+void ExtractTool::parseWantedGroups(crispr::xml::base& xmlObj, 
+                                    xercesc::DOMElement * rootElement)
 {
     
     try {
         int num_groups_to_process = static_cast<int>(ET_Group.size());
-        for (xercesc::DOMElement * currentElement = rootElement->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+        for (xercesc::DOMElement * currentElement = rootElement->getFirstElementChild(); 
+             currentElement != NULL; 
+             currentElement = currentElement->getNextElementSibling()) {
             // break if we have processed all of the wanted groups
             if(ET_BitMask[0] && num_groups_to_process == 0) {
                 break;
             }
             // new group
-            char * c_group_id = tc(currentElement->getAttribute(xmlObj.getGid()));
+            char * c_group_id = tc(currentElement->getAttribute(xmlObj.attr_Gid()));
             std::string group_id = c_group_id;
             xr(&c_group_id);
             if (ET_BitMask[0]) {
@@ -280,7 +288,10 @@ void ExtractTool::parseWantedGroups(crispr::XML& xmlObj, xercesc::DOMElement * r
         char* message = xercesc::XMLString::transcode( e.getMessage() );
         std::stringstream errBuf;
         errBuf << "Error parsing file: " << message << std::flush;
-        throw (crispr::xml_exception(__FILE__, __LINE__,__PRETTY_FUNCTION__,(errBuf.str()).c_str()));
+        throw (crispr::xml_exception(__FILE__, 
+                                     __LINE__,
+                                     __PRETTY_FUNCTION__,
+                                     (errBuf.str()).c_str()));
         xercesc::XMLString::release( &message );
     } catch (crispr::xml_exception& xe) {
         std::cerr<< xe.what()<<std::endl;
@@ -290,33 +301,42 @@ void ExtractTool::parseWantedGroups(crispr::XML& xmlObj, xercesc::DOMElement * r
     }
 }
 
-void ExtractTool::extractDataFromGroup(crispr::XML& xmlDoc, xercesc::DOMElement * currentGroup)
+void ExtractTool::extractDataFromGroup(crispr::xml::base& xmlDoc, 
+                                       xercesc::DOMElement * currentGroup)
 {
     // get the first child - the data element
     try {
-        // the data element is the first child of the group
-        xercesc::DOMElement * dataElement = currentGroup->getFirstElementChild();
-        // go through all the children of data
-        for (xercesc::DOMElement * currentElement = dataElement->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-            char * c_gid = tc(currentGroup->getAttribute(xmlDoc.getGid()));
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getDrs())) {
-                if (ET_BitMask[5]) {
-                    // get direct repeats
-                    processData(xmlDoc, currentElement, REPEAT, c_gid, ET_RepeatStream);
-                }
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getSpacers())) {
-                if (ET_BitMask[4]) {
-                    // get spacers
-                    processData(xmlDoc, currentElement, SPACER, c_gid, ET_SpacerStream);
-                }
-            } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlDoc.getFlankers())) {
-                if (ET_BitMask[3]) {
-                    // get flankers
-                    processData(xmlDoc, currentElement, FLANKER, c_gid, ET_FlankerStream);
-                }
-            }
-            xr(&c_gid);
-        }
+		char * c_gid = tc(currentGroup->getAttribute(xmlDoc.attr_Gid()));
+		for (xercesc::DOMElement * current_element = currentGroup->getFirstElementChild();
+		     current_element != NULL;
+		     current_element = current_element->getNextElementSibling()) {
+
+				 if(xercesc::XMLString::equals(current_element->getTagName(), xmlDoc.tag_Data())) {
+					 // go through all the children of data
+					 for (xercesc::DOMElement * data_child = current_element->getFirstElementChild(); 
+					      data_child != NULL; 
+					      data_child = data_child->getNextElementSibling()) {
+
+							  if (xercesc::XMLString::equals(data_child->getTagName(), xmlDoc.tag_Drs())) {
+								  if (ET_BitMask[5]) {
+									  // get direct repeats
+									  processData(xmlDoc, data_child, REPEAT, c_gid, ET_RepeatStream);
+								  }
+							  } else if (xercesc::XMLString::equals(data_child->getTagName(), xmlDoc.tag_Spacers())) {
+								  if (ET_BitMask[4]) {
+									  // get spacers
+									  processData(xmlDoc, data_child, SPACER, c_gid, ET_SpacerStream);
+								  }
+							  } else if (xercesc::XMLString::equals(data_child->getTagName(), xmlDoc.tag_Flankers())) {
+								  if (ET_BitMask[3]) {
+									  // get flankers
+									  processData(xmlDoc, data_child, FLANKER, c_gid, ET_FlankerStream);
+								  }
+							  }
+						  }
+				 }
+			 }
+		xr(&c_gid);
     } catch( xercesc::XMLException& e ) {
         char* message = xercesc::XMLString::transcode( e.getMessage() );
         std::ostringstream errBuf;
@@ -328,26 +348,32 @@ void ExtractTool::extractDataFromGroup(crispr::XML& xmlDoc, xercesc::DOMElement 
     }
 }
 
-void ExtractTool::processData(crispr::XML& xmlDoc, xercesc::DOMElement * currentType, ELEMENT_TYPE wantedType, std::string gid, std::ostream& outStream)
+void ExtractTool::processData(crispr::xml::base& xmlDoc, 
+                              xercesc::DOMElement * currentType, 
+                              ELEMENT_TYPE wantedType, 
+                              std::string gid, 
+                              std::ostream& outStream)
 {
     try {
-        for (xercesc::DOMElement * currentElement = currentType->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
-            char * c_seq = tc(currentElement->getAttribute(xmlDoc.getSeq()));
+        for (xercesc::DOMElement * currentElement = currentType->getFirstElementChild(); 
+             currentElement != NULL; 
+             currentElement = currentElement->getNextElementSibling()) {
+            char * c_seq = tc(currentElement->getAttribute(xmlDoc.attr_Seq()));
             std::string id;
             switch (wantedType) {
                 case REPEAT:
                 {
-                    char * c_id = tc(currentElement->getAttribute(xmlDoc.getDrid()));
+                    char * c_id = tc(currentElement->getAttribute(xmlDoc.attr_Drid()));
                     id = c_id;
                     xr(&c_id);
                     break;
                 }
                 case SPACER:
                 {
-                    char * c_id = tc(currentElement->getAttribute(xmlDoc.getSpid()));
+                    char * c_id = tc(currentElement->getAttribute(xmlDoc.attr_Spid()));
                     id = c_id;
-                    if (ET_BitMask[6] && currentElement->hasAttribute(xmlDoc.getCov())) {
-                        char * c_cov = tc(currentElement->getAttribute(xmlDoc.getCov()));
+                    if (ET_BitMask[6] && currentElement->hasAttribute(xmlDoc.attr_Cov())) {
+                        char * c_cov = tc(currentElement->getAttribute(xmlDoc.attr_Cov()));
                         id += "_Cov_"; 
                         id += c_cov;
                         xr(&c_cov);
@@ -357,7 +383,7 @@ void ExtractTool::processData(crispr::XML& xmlDoc, xercesc::DOMElement * current
                 }
                 case FLANKER:
                 {
-                    char * c_id = tc(currentElement->getAttribute(xmlDoc.getFlid()));
+                    char * c_id = tc(currentElement->getAttribute(xmlDoc.attr_Flid()));
                     id = c_id;
                     xr(&c_id);
                     break;
@@ -368,7 +394,10 @@ void ExtractTool::processData(crispr::XML& xmlDoc, xercesc::DOMElement * current
                 }
                 default:
                 {
-                    throw (crispr::runtime_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Input element enum unknown"));
+                    throw (crispr::runtime_exception(__FILE__, 
+                                                     __LINE__, 
+                                                     __PRETTY_FUNCTION__,
+                                                     "Input element enum unknown"));
                     break;
                 }
             }
@@ -379,7 +408,10 @@ void ExtractTool::processData(crispr::XML& xmlDoc, xercesc::DOMElement * current
         char* message = xercesc::XMLString::transcode( e.getMessage() );
         std::stringstream errBuf;
         errBuf << "Error parsing file: " << message << std::flush;
-        throw (crispr::xml_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, (errBuf.str()).c_str()));
+        throw (crispr::xml_exception(__FILE__,
+                                     __LINE__, 
+                                     __PRETTY_FUNCTION__, 
+                                     (errBuf.str()).c_str()));
         xercesc::XMLString::release( &message );
     } catch (crispr::xml_exception& xe) {
         std::cerr<< xe.what()<<std::endl;

@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Xml.h"
+#include <libcrispr/Xml.h>
 #include <bitset>
 
 class FilterTool {
@@ -26,6 +26,7 @@ class FilterTool {
     int FT_Flank;
     int FT_contigs;
     std::string FT_OutputFile;
+	int countElements(xercesc::DOMElement * parentNode);
    public: 
     FilterTool() {
         FT_Spacers = 0;
@@ -36,11 +37,11 @@ class FilterTool {
 
 int processOptions(int argc, char ** argv);
 int processInputFile(const char * inputFile);
-bool parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
-bool parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser);
-int parseDrs(xercesc::DOMElement * parentNode);
-int parseSpacers(xercesc::DOMElement * parentNode);
-int parseFlankers(xercesc::DOMElement * parentNode);
+bool parseGroup(xercesc::DOMElement * parentNode, crispr::xml::reader& xmlParser);
+bool parseData(xercesc::DOMElement * parentNode, crispr::xml::reader& xmlParser);
+inline int parseDrs(xercesc::DOMElement * parentNode){return countElements(parentNode);}
+inline int parseSpacers(xercesc::DOMElement * parentNode){return countElements(parentNode);}
+inline int parseFlankers(xercesc::DOMElement * parentNode){return countElements(parentNode);}
 };
 
 int filterMain(int argc, char ** argv);

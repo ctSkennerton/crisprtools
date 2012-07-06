@@ -16,7 +16,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "MergeTool.h"
-#include "Exception.h"
+#include <libcrispr/Exception.h>
 #include "config.h"
 #include <getopt.h>
 #include <sstream>
@@ -77,39 +77,44 @@ int mergeMain (int argc, char ** argv)
             // merge!!
             
             // create a DOM document
-            crispr::XML master_DOM;
+            crispr::xml::writer master_DOM;
             int master_DOM_error;
-            xercesc::DOMElement * master_root_elem = master_DOM.createDOMDocument("crispr", "1.0", master_DOM_error);
+            xercesc::DOMElement * master_root_elem = master_DOM.createDOMDocument("crispr", "1.1", master_DOM_error);
             if (master_root_elem != NULL && master_DOM_error == 0) {
                 
                 xercesc::DOMDocument * master_doc = master_DOM.getDocumentObj();
                 while (opt_index < argc) {
                     
                     // create a file parser
-                    crispr::XML input_file;                    
+                    crispr::xml::reader input_file;                    
                     xercesc::DOMDocument * input_doc = input_file.setFileParser(argv[opt_index]);
                     // Get the top-level element: 
                     xercesc::DOMElement* elementRoot = input_doc->getDocumentElement();
                     
-                    if( !elementRoot ) throw(crispr::xml_exception( __FILE__,__LINE__,__PRETTY_FUNCTION__,"empty XML document" ));
+                    if( !elementRoot ) throw(crispr::xml_exception( __FILE__,
+                                                                   __LINE__,
+                                                                   __PRETTY_FUNCTION__,
+                                                                   "empty XML document" ));
                     
                     // get the children
-                    for (xercesc::DOMElement * currentElement = elementRoot->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+                    for (xercesc::DOMElement * currentElement = elementRoot->getFirstElementChild(); 
+                         currentElement != NULL; 
+                         currentElement = currentElement->getNextElementSibling()) {
 
-                        if( xercesc::XMLString::equals(currentElement->getTagName(), input_file.getGroup())) {
+                        if( xercesc::XMLString::equals(currentElement->getTagName(), input_file.tag_Group())) {
                             
                             if (mt.getSanitise()) {
                                 // change the name 
                                 std::stringstream ss;
                                 ss <<'G'<< mt.getNextGroupID();
                                 XMLCh * x_group = tc(ss.str().c_str());
-                                currentElement->setAttribute(master_DOM.getGid(), x_group);
+                                currentElement->setAttribute(master_DOM.attr_Gid(), x_group);
                                 mt.incrementGroupID();
                                 xr(&x_group);
                             
                             } else {
                                 // check if we already seen it if so warn the user
-                                char * gid = tc(currentElement->getAttribute(master_DOM.getGid()));
+                                char * gid = tc(currentElement->getAttribute(master_DOM.attr_Gid()));
                                 
                                 if ( mt.find(gid) != mt.end()) {
                                     // this group id has been seen before
@@ -129,7 +134,10 @@ int mergeMain (int argc, char ** argv)
                 }   
                 master_DOM.printDOMToFile(mt.getFileName());
             } else {
-                throw crispr::xml_exception(__FILE__, __LINE__,__PRETTY_FUNCTION__,"no root for master DOM");
+                throw crispr::xml_exception(__FILE__, 
+                                            __LINE__,
+                                            __PRETTY_FUNCTION__,
+                                            "no root for master DOM");
             }
 
         }

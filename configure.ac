@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(crisprtools, 0.1.4, c.skennerton@gmail.com)
+AC_INIT(crisprtools, 0.1.5, c.skennerton@gmail.com)
 
 AC_CONFIG_AUX_DIR(build)
 AC_CONFIG_MACRO_DIR([m4])
@@ -77,11 +77,9 @@ AC_SUBST(GV_LIBS)
 AC_PROG_CXX
 AC_PROG_CC
 
-AX_LIB_XERCES
-if test $HAVE_XERCES = no; then
-AC_MSG_ERROR([Cannot find Xerces-c])
-else
-AM_CONDITIONAL([XERCES_FOUND], [test $HAVE_XERCES = yes])
+AX_LIBCRISPR
+if test $HAVE_LIBCRISPR = no; then
+AC_MSG_ERROR([Cannot find libcrispr])
 fi
 
 # Checks for header files.
@@ -137,4 +135,4 @@ if test x$rendering = xtrue; then
 fi
 
 
-AC_OUTPUT(Makefile src/Makefile src/libcrispr/Makefile )
+AC_OUTPUT(Makefile src/Makefile man/Makefile)

@@ -16,11 +16,11 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "DrawTool.h"
-#include "Exception.h"
+#include <libcrispr/Exception.h>
 #include "CrisprGraph.h"
 #include "Utils.h"
 #include "config.h"
-#include "StlExt.h"
+#include <libcrispr/StlExt.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <graphviz/gvc.h>
@@ -165,18 +165,23 @@ void DrawTool::generateGroupsFromString ( std::string str)
 int DrawTool::processInputFile(const char * inputFile)
 {
     try {
-        crispr::XML xml_parser;
+        crispr::xml::base xml_parser;
         xercesc::DOMDocument * input_doc_obj = xml_parser.setFileParser(inputFile);
         xercesc::DOMElement * root_elem = input_doc_obj->getDocumentElement();
         
-        if( !root_elem ) throw(crispr::xml_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__, "empty XML document" ));
+        if( !root_elem ) throw(crispr::xml_exception(__FILE__, 
+                                                     __LINE__, 
+                                                     __PRETTY_FUNCTION__, 
+                                                     "empty XML document" ));
 
         // get the children
-        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+        for (xercesc::DOMElement * currentElement = root_elem->getFirstElementChild(); 
+             currentElement != NULL; 
+             currentElement = currentElement->getNextElementSibling()) {
                 
             // is this a group element
-            if (xercesc::XMLString::equals(currentElement->getTagName(), xml_parser.getGroup())) {
-                char * c_group_id = tc(currentElement->getAttribute(xml_parser.getGid()));
+            if (xercesc::XMLString::equals(currentElement->getTagName(), xml_parser.tag_Group())) {
+                char * c_group_id = tc(currentElement->getAttribute(xml_parser.attr_Gid()));
                 std::string group_id = c_group_id;
                 if (DT_Subset) {
                     
@@ -201,30 +206,32 @@ int DrawTool::processInputFile(const char * inputFile)
     
     return 0;
 }
-void DrawTool::parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
+void DrawTool::parseGroup(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser)
 {
 
     
     // create a new graph object
-    char * c_gid = tc(parentNode->getAttribute(xmlParser.getGid()));
+    char * c_gid = tc(parentNode->getAttribute(xmlParser.attr_Gid()));
     crispr::graph * current_graph = new crispr::graph(c_gid);
     xr(&c_gid);
     // change the max and min coverages back to their original values
     resetInitialLimits();
     
     DT_Graphs.push_back(current_graph);
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
         
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getData())) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Data())) {
             parseData(currentElement, xmlParser, current_graph);
             setColours();
-        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getAssembly())) {
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Assembly())) {
             parseAssembly(currentElement, xmlParser, current_graph);
         }
         
     }
     
-    char * c_file_prefix = tc(parentNode->getAttribute(xmlParser.getGid()));
+    char * c_file_prefix = tc(parentNode->getAttribute(xmlParser.attr_Gid()));
     std::string file_prefix = c_file_prefix;
     std::string file_name = file_prefix + "." + DT_OutputFormat;
     xr(&c_file_prefix);
@@ -241,18 +248,22 @@ void DrawTool::parseGroup(xercesc::DOMElement * parentNode, crispr::XML& xmlPars
     }
 }
 
-void DrawTool::parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph)
+void DrawTool::parseData(xercesc::DOMElement * parentNode, 
+                         crispr::xml::base& xmlParser, 
+                         crispr::graph * currentGraph)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        /*if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getDrs())) {
+        /*if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Drs())) {
                 // change the direct repeats
                 parseDrs(currentElement, xmlParser);
         } else*/
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacers())) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Spacers())) {
                 // change the spacers
                 parseSpacers(currentElement, xmlParser, currentGraph);
-        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFlankers())) {
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Flankers())) {
                 // change the flankers
                 parseFlankers(currentElement, xmlParser, currentGraph);
         }
@@ -260,7 +271,7 @@ void DrawTool::parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParse
 }
 
 
-//void DrawTool::parseDrs(xercesc::DOMElement * parentNode, crispr::XML& xmlParser)
+//void DrawTool::parseDrs(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser)
 //{
 //    xercesc::DOMNodeList * children = parentNode->getChildNodes();
 //    const  XMLSize_t nodeCount = children->getLength();
@@ -277,12 +288,16 @@ void DrawTool::parseData(xercesc::DOMElement * parentNode, crispr::XML& xmlParse
 //        }
 //    }
 //}
-void DrawTool::parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph)
+void DrawTool::parseSpacers(xercesc::DOMElement * parentNode, 
+                            crispr::xml::base& xmlParser, 
+                            crispr::graph * currentGraph)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacer())) {
-            char * node_name = tc(currentElement->getAttribute(xmlParser.getSpid()));
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Spacer())) {
+            char * node_name = tc(currentElement->getAttribute(xmlParser.attr_Spid()));
             
             Agnode_t * current_graphviz_node = currentGraph->addNode(node_name);
             
@@ -293,17 +308,20 @@ void DrawTool::parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlPa
             delete circle;
             
             
-            char * c_spid = tc(currentElement->getAttribute(xmlParser.getSpid()));
+            char * c_spid = tc(currentElement->getAttribute(xmlParser.attr_Spid()));
             std::string spid = c_spid;
 
-            if (currentElement->hasAttribute(xmlParser.getCov())) {
-                char * c_cov = tc(currentElement->getAttribute(xmlParser.getCov()));
+            if (currentElement->hasAttribute(xmlParser.attr_Cov())) {
+                char * c_cov = tc(currentElement->getAttribute(xmlParser.attr_Cov()));
                 double current_cov;
                 if (from_string<double>(current_cov, c_cov, std::dec)) {
                     recalculateLimits(current_cov);
                     DT_SpacerCoverage[spid] = std::pair<bool, double>(true,current_cov);
                 } else {
-                    throw crispr::runtime_exception(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Unable to convert serialized coverage");
+                    throw crispr::runtime_exception(__FILE__, 
+                                                    __LINE__, 
+                                                    __PRETTY_FUNCTION__,
+                                                    "Unable to convert serialized coverage");
                 }
                 
                 xr(&c_cov);
@@ -319,12 +337,16 @@ void DrawTool::parseSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlPa
     }
 }
 
-void DrawTool::parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph)
+void DrawTool::parseFlankers(xercesc::DOMElement * parentNode, 
+                             crispr::xml::base& xmlParser, 
+                             crispr::graph * currentGraph)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getSpacer())) {
-            char * c_flid = tc(currentElement->getAttribute(xmlParser.getFlid()));
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Flanker())) {
+            char * c_flid = tc(currentElement->getAttribute(xmlParser.attr_Flid()));
             Agnode_t * current_graphviz_node = currentGraph->addNode(c_flid);
             
             char * shape = strdup("shape");
@@ -339,12 +361,16 @@ void DrawTool::parseFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlP
     }
 }
 
-void DrawTool::parseAssembly(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph)
+void DrawTool::parseAssembly(xercesc::DOMElement * parentNode, 
+                             crispr::xml::base& xmlParser, 
+                             crispr::graph * currentGraph)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getContig())) {
-            char * c_contig_id = tc(currentElement->getAttribute(xmlParser.getCid()));
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Contig())) {
+            char * c_contig_id = tc(currentElement->getAttribute(xmlParser.attr_Cid()));
             std::string contig_id = c_contig_id;
             parseContig(currentElement, xmlParser,currentGraph, contig_id);
             xr(&c_contig_id);
@@ -355,22 +381,27 @@ void DrawTool::parseAssembly(xercesc::DOMElement * parentNode, crispr::XML& xmlP
     
 }
 
-void DrawTool::parseContig(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph, std::string& contigId)
+void DrawTool::parseContig(xercesc::DOMElement * parentNode, 
+                           crispr::xml::base& xmlParser, 
+                           crispr::graph * currentGraph, 
+                           std::string& contigId)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getCspacer())) {
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Cspacer())) {
             // get the node
-            char * c_spid = tc(currentElement->getAttribute(xmlParser.getSpid()));
+            char * c_spid = tc(currentElement->getAttribute(xmlParser.attr_Spid()));
             Agnode_t * current_graphviz_node = currentGraph->addNode(c_spid);
-            xr(&c_spid);
+
             // find the coverage for this guy if it was set
-            char * c_cov_spid = tc(currentElement->getAttribute(xmlParser.getSpid()));
-            std::string cov_spid = c_cov_spid;
+
+            std::string cov_spid = c_spid;
+			xr(&c_spid);
             if (DT_SpacerCoverage[cov_spid].first) {
-                char * c_colour = tc(currentElement->getAttribute(xmlParser.getSpid()));
-                std::string color = DT_Rainbow.getColour(DT_SpacerCoverage[c_colour].second);
-                xr(&c_colour);
+                std::string color = DT_Rainbow.getColour(DT_SpacerCoverage[cov_spid].second);
+
                 // fix things up for Graphviz
                 char * color_for_graphviz = strdup(('#' + color).c_str());
 
@@ -387,35 +418,48 @@ void DrawTool::parseContig(xercesc::DOMElement * parentNode, crispr::XML& xmlPar
                 delete fillcolour;
                 delete color_for_graphviz;
             }
-            xr(&c_cov_spid);
+
             parseCSpacer(currentElement, xmlParser,currentGraph,current_graphviz_node,contigId);
         }
     }
 }
 
-void DrawTool::parseCSpacer(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, std::string& contigId)
+void DrawTool::parseCSpacer(xercesc::DOMElement * parentNode, 
+                            crispr::xml::base& xmlParser, 
+                            crispr::graph * currentGraph, 
+                            Agnode_t * currentGraphvizNode, 
+                            std::string& contigId)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
                     
        /* if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getBspacers())) {
                 parseLinkSpacers(currentElement, xmlParser,currentGraph,currentGraphvizNode, REVERSE,contigId);
-        } else*/ if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFspacers())) {
+        } else*/ if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Fspacers())) {
                 parseLinkSpacers(currentElement, xmlParser,currentGraph,currentGraphvizNode, FORWARD,contigId);
         /*} else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getBflankers())) {
                 parseLinkFlankers(currentElement, xmlParser,currentGraph,currentGraphvizNode, REVERSE,contigId);
-        */} else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.getFflankers())) {
+        */} else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Fflankers())) {
                 parseLinkFlankers(currentElement, xmlParser,currentGraph,currentGraphvizNode, FORWARD,contigId);
         }
         
     }
 }
 
-void DrawTool::parseLinkSpacers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId)
+void DrawTool::parseLinkSpacers(xercesc::DOMElement * parentNode, 
+                                crispr::xml::base& xmlParser, 
+                                crispr::graph * currentGraph, 
+                                Agnode_t * currentGraphvizNode, 
+                                EDGE_DIRECTION edgeDirection, 
+                                std::string& contigId)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
             
-        char * c_spid = tc(currentElement->getAttribute(xmlParser.getSpid()));
+        char * c_spid = tc(currentElement->getAttribute(xmlParser.attr_Spid()));
         Agnode_t * edge_node = currentGraph->addNode(c_spid);
         xr(&c_spid);
         if (edgeDirection == FORWARD) {
@@ -426,11 +470,18 @@ void DrawTool::parseLinkSpacers(xercesc::DOMElement * parentNode, crispr::XML& x
     }
 }
 
-void DrawTool::parseLinkFlankers(xercesc::DOMElement * parentNode, crispr::XML& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId)
+void DrawTool::parseLinkFlankers(xercesc::DOMElement * parentNode, 
+                                 crispr::xml::base& xmlParser, 
+                                 crispr::graph * currentGraph, 
+                                 Agnode_t * currentGraphvizNode, 
+                                 EDGE_DIRECTION edgeDirection, 
+                                 std::string& contigId)
 {
-    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); currentElement != NULL; currentElement = currentElement->getNextElementSibling()) {
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
 
-        char * c_flid = tc( currentElement->getAttribute(xmlParser.getFlid()));
+        char * c_flid = tc( currentElement->getAttribute(xmlParser.attr_Flid()));
 
         Agnode_t * edge_node = currentGraph->addNode(c_flid);
         xr(&c_flid);
