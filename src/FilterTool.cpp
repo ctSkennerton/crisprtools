@@ -20,11 +20,21 @@
 #include "config.h"
 #include "StlExt.h"
 #include <iostream>
+#include <getopt.h>
 
 int FilterTool::processOptions (int argc, char ** argv)
 {
 	int c;
-	while((c = getopt(argc, argv, "hs:c:f:d:o:")) != -1)
+    int index;
+    static struct option long_options [] = {       
+        {"help", no_argument, NULL, 'h'},
+        {"outfile", required_argument, NULL, 'o'},
+        {"spacer",required_argument,NULL,'s'},
+        {"direct-repeat", required_argument, NULL, 'd'},
+        {"flanker", required_argument, NULL, 'f'},
+        {0,0,0,0}
+    };
+	while((c = getopt_long(argc, argv, "hs:c:f:d:o:", long_options,&index)) != -1)
 	{
         switch(c)
 		{

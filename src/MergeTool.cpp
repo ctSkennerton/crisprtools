@@ -26,7 +26,11 @@ int MergeTool::processOptions (int argc, char ** argv)
 	int c;
     int index;
     static struct option long_options [] = {       
-        {"help", required_argument, NULL, 'h'}
+        {"help", no_argument, NULL, 'h'},
+        {"sanitise", no_argument, NULL, 's'},
+        {"outfile", required_argument, NULL, 'o'},
+        {0,0,0,0}
+
     };
 	while((c = getopt_long(argc, argv, "hso:", long_options, &index)) != -1)
 	{

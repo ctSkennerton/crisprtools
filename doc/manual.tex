@@ -1,0 +1,377 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% Examples of Article customizations
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{a4paper} % or letterpaper (US) or a5paper or....
+% \geometry{margin=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{hyperref} % for following hyperlinks
+\hypersetup{
+    colorlinks,%
+    citecolor=blue,%
+    filecolor=blue,%
+    linkcolor=blue,%
+    urlcolor=blue
+}
+\usepackage{listings} % for source code
+\usepackage{listings}
+\usepackage[usenames,dvipsnames]{color}
+
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  showstringspaces=false,
+  commentstyle=\color{gray}\upshape
+  breaklines=true
+}
+\usepackage{longtable}
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+%%% ToC (table of contents) APPEARANCE
+\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+%%% Source Code Appearance
+\usepackage{listings}
+\usepackage[usenames,dvipsnames]{color}
+
+\definecolor{gray}{rgb}{0.4,0.4,0.4}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+
+\lstset{
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  showstringspaces=false,
+  commentstyle=\color{gray}\upshape
+  breaklines=true
+}
+
+\lstdefinelanguage{XML_new}
+{
+  morestring=[b]",
+  morestring=[s]{>}{<},
+  morecomment=[s]{<?}{?>},
+  stringstyle=\color{black},
+  identifierstyle=\color{darkblue},
+  keywordstyle=\color{cyan},
+  morekeywords={seq,drid,confcnt, totcnt, spid, flid,cov, type,url, cid, drconf}% list your attributes here
+}
+
+\lstdefinelanguage{DTD}
+{
+morestring=[b]",
+  morecomment=[s]{<?}{?>},
+%morecomment=[s]{\#}{\>},
+%moredirectives={\#REQUIRED},
+  stringstyle=\color{darkblue},
+  identifierstyle=\color{gray},
+  keywordstyle=\color{cyan},
+  emphstyle=\color{RoyalPurple},
+emph={CDATA,PCDATA,REQUIRED, IMPLIED},
+ moredelim=*[s][\color{Black}]{(}{)},
+morekeywords={ELEMENT, ATTLIST, DOCTYPE,  EMPTY}% list your attributes here
+}
+
+%%% text expansion macros
+\newcommand{\programname}{Crisprtools }
+\newcommand{\authorname}{Connor Skennerton}
+\newcommand{\crispr}{CRISPR}
+\newcommand{\crisprfull}{Clustered Regularly Interspersed Short Palindromic Repeats }
+
+%\optionflag{g} = -g
+\newcommand{\optionflag}[1]{\texttt{-#1}}
+%\optionflagarg{a}{INT} = -a INT
+\newcommand{\optionflagarg}[2]{\optionflag{#1}\ \texttt{#2}}
+%\optionflagoptarg{a}{INT} = -a [INT]
+\newcommand{\optionflagoptarg}[2]{\optionflag{#1}\ \texttt{[#2]}}
+%\optionflagargnospace{a}{INT} = -aINT
+\newcommand{\optionflagargnospace}[2]{\optionflag{#1}\texttt{#2}}
+%\optionflagargnospace{a}{INT} = -a[INT]
+\newcommand{\optionflagoptargnospace}[2]{\optionflag{#1}\texttt{[#2]}}
+
+\newcommand{\longoptionflag}[1]{\texttt{--#1}}
+\newcommand{\longoptionflagarg}[2]{\longoptionflag{#1}\ \texttt{#2}}
+\newcommand{\longoptionflagoptarg}[2]{\longoptionflag{#1}\ \texttt{[#2]}}
+
+\newcommand{\longoptionflagargnospace}[2]{\longoptionflag{#1}\texttt{=#2}}
+
+\newcommand{\longoptionflagoptargnospace}[2]{\longoptionflag{#1}\texttt{[=#2]}}
+
+\newcommand{\combinedoptionflag}[2]{\optionflag{#1}\ \longoptionflag{#2}}
+\newcommand{
+	\combinedoptionflagarg}[3]{
+		\shortstack[l]{
+			\optionflagarg{#1}{#3} \\ \longoptionflagarg{#2}{#3}
+		}
+	}
+\newcommand{
+	\combinedoptionflagoptarg}[3]{
+		\shortstack[l]{
+			\optionflagoptarg{#1}{#3} \\ \longoptionflagoptarg{#2}{#3}
+		}
+	}
+\newcommand{
+	\combinedoptionflagargnospace}[3]{
+		\shortstack[l]{
+			\optionflagargnospace{#1}{#3} \\ \longoptionflagargnospace{#2}{#3}
+		}
+	}
+\newcommand{
+	\combinedoptionflagoptargnospace}[3]{
+		\shortstack[l]{
+			\optionflagoptargnospace{#1}{#3} \\ \longoptionflagoptargnospace{#2}{#3}
+		}
+	}
+%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{\programname: a toolkit for .crispr files}
+\author{\authorname}
+%\date{} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed 
+
+\begin{document}
+\maketitle
+\tableofcontents
+\section{Quick Start}
+\begin{lstlisting}
+	[$ ./autogen.sh]
+	$ ./configure
+	$ make
+	$ make install
+	
+	$ ./crisprtools <command> [options] input_file{1, n}
+\end{lstlisting}
+\section{Installation}
+\programname has been developed with the GNU build system for maximum compatibility across platforms.  However, because of this \programname requires a UNIX operating system and has been tested on both 64-bit Linux (Ubuntu) and MacOSX personal computers with intel processors and servers with 64-bit Opteron processors.
+\subsection{Prerequisites}
+\subsubsection{Computer Resources}
+\programname should run on Linux or MacOSX with 64-bit architectures with gcc installed (note that other compilers have not been tested).  \programname successfully compiles with gcc 4.2 and gcc 4.4 other versions of gcc have not been tested.    
+
+\subsubsection{Pre-installed Software and Libraries}
+\programname requires that the Xerces-c XML library and libcrispr be installed for compilation.  Xerces-c is available freely at \url{http://xerces.apache.org/}.  Libcripsr should be bundled with \programname, however it must be built separately. All other programs and packages are optional.
+\subsubsection{Optional Packages and Programs}
+\programname can optionally use the Graphviz libraries to draw images of the spacer arrangements.  To use this functionality  the Graphviz package must be installed \url{www.graphviz.org}.  Testing for the Graphviz package occurs during configuration and it should be noted that even if you have Graphviz you still need to opt-in to graph rendering (see  ~\nameref{sec:configure} for the correct options).  If you enable rendering during the configuration process you will be able to use the \programname draw command (see~\nameref{sec:ctdraw}) with new user options based on what Graphviz executables were found.
+
+\subsection{Compiling}
+On a GNU system simply:
+\begin{lstlisting}
+	[$ ./autogen.sh]
+	$  ./configure
+	$  make
+	$  [sudo] make install
+\end{lstlisting}
+NOTE: running \lstinline$./autogen.sh$ may be necessary to generate the \lstinline$configure$ program
+\subsubsection{Configure/Compiling Options}
+\label{sec:configure}
+\programname supports a number of compile-time options as well as the common options:
+
+    \begin{longtable}{  l    p{10cm} }
+    \hline
+    Option & Definition \\  \hline\hline   
+\longoptionflag{enable-rendering} &  Set this option will allow \programname to output rendered images of the final spacer graphs.  Setting this option does not garentee that \programname will produce images, it will also need to detect at least one of the executables of the Graphviz package in your PATH environmental variable. \\  \\
+\longoptionflag{with-xerces} & Set the path where the Xerces header and library objcets can be found\\ \\
+\longoptionflag{with-libcrispr} & Set the path where libcrispr header and library objects can be found \\
+
+    \hline
+    \end{longtable}
+
+\section{Commands and Options}
+\programname has a number of commands for querying and extracting information from .crispr files.  
+\subsection{\lstinline$stat$}
+\label{sec:ctstat}
+The \lstinline$stat$ command can be used for obtaining basic information about the \crispr\ loci  in the file. This includes the number of direct repeats and their spacers as well as the direct repeat sequences that were identified.
+\begin{lstlisting}
+$ crisprtools stat -[ahptH] [-g INT{1,n}] [-s CHAR] input.crispr
+\end{lstlisting}
+ \begin{longtable}{  l    p{10cm} }
+  %  \hline
+    %Option & Definition \\  %\hline\hline   
+\optionflag{a} &  Output an aggregate statistic along with the statistics for each \crispr\ in the file. \\  \\
+ \optionflag{h} & output a basic usage help message. \\ \\
+\optionflag{H}\ \longoptionflag{header} & Output a column header in tabular output \\ \\
+\optionflagarg{g}{INT\{,n\}} & A comma separated list of group IDs that you would like to see stats for \\ \\
+\optionflag{p} & pretty-print the statistics for each of each of the \crispr s in the file \\ \\
+\optionflagarg{s}{CHAR} & Change the character used for the separator in the tabular output. [Default: \textbackslash t] \\ \\
+\optionflag{t} & Print statistics in tabular format. (this is default).  The format is 10 columns:
+Group ID, Consensus repeat, Number of repeat variants, average repeat length, number of spacers, average spacer length, average spacer coverage, number of flankers, average flanker length, number of sources
+
+    %\hline
+\end{longtable}
+
+\subsection{\lstinline$extract$}
+\label{sec:ctextract}
+The \texttt{extract} command will print the spacer, repeat and flanker sequences in fasta format. 
+\begin{lstlisting}
+$ crisprtools extract [-hxC] [-o FILE] [-O STRING] [-fFILE] 
+				[-sFILE] [-dFILE] [-H STRING] 
+				[-g INT{1,n}] [-s CHAR] input.crispr
+\end{lstlisting}
+ \begin{longtable}{  l    p{10cm} }
+  %  \hline
+    %Option & Definition \\  %\hline\hline   
+
+ \combinedoptionflag{h}{help} & output a basic usage help message. \\ \\
+\combinedoptionflagarg{H}{header-prefix}{STRING} & Add a prefix to the header lines for the extracted data \\ \\
+\combinedoptionflagarg{g}{groups}{INT\{,n\}} & A comma separated list of group IDs that you would like to see stats for \\ \\
+\combinedoptionflagoptargnospace{s}{spacer}{FILE} & Extract spacers from the .crispr file.  Without an arguement the spacers are printed to \texttt{stdout}; however an optional output file can be specified.  Note that there can be no space between the option flag and the output file, if one is specified. \\ \\
+\combinedoptionflagoptargnospace{d}{direct-repeat}{FILE} & Extract direct repeats from the .crispr file. Without an arguement the repeats are printed to \texttt{stdout}; however an optional output file can be specified.  Note that there can be no space between the option flag and the output file, if one is specified. \\ \\
+\combinedoptionflagoptargnospace{f}{flanker}{FILE} & Extract flanking from the .crispr file. Without an arguement the flanking sequences are printed to \texttt{stdout}; however an optional output file can be specified.  Note that there can be no space between the option flag and the output file, if one is specified. \\ \\
+\combinedoptionflag{x}{split-group} & Split the results into different files for each group.  File names specified with \optionflag{s}\ \optionflag{d}\ \optionflag{f} will not be used in this mode but instead output files will be in the form of \texttt{GroupPrefix\_[spacer|flanker|repeat].fa}\\ \\
+\combinedoptionflagarg{o}{outfile-prefix}{STRING} & All files created will have the following prefix. [Default: no prefix] \\ \\
+\combinedoptionflagarg{O}{outfile-dir}{FILE} & Output directory for extracted data, used when \optionflag{x} is in place. [Default: .]\\ \\
+\optionflag{C} & Changes the header information when extracting spacers so that the coverage is not printed \\
+
+    %\hline
+\end{longtable}
+\subsection{\lstinline$rm$}
+\label{sec:ctrm}
+The \texttt{rm} command removes groups from a .crispr file.
+\begin{lstlisting}
+$ crisprtools rm [-hr] [-o FILE]  [-g INT{1,n}] input.crispr
+\end{lstlisting}
+ \begin{longtable}{  l    p{10cm} }
+  %  \hline
+    %Option & Definition \\  %\hline\hline   
+
+ \combinedoptionflag{h}{help} & output a basic usage help message. \\ \\
+\combinedoptionflagarg{g}{groups}{INT\{,n\}} & A comma separated list of group IDs that you would like to see stats for \\ \\
+\combinedoptionflag{r}{remove-file} & Remove any associated files listed in the \lstinline[language=XML_new]$<metadata>$ element for the \crispr. [Default: no removal] \\ \\
+\combinedoptionflagarg{o}{outfile}{FILE} & Output a new .crispr file with the specified groups removed [Default: change file inplace] \\ 
+
+    %\hline
+\end{longtable}
+\subsection{\lstinline$merge$}
+\label{sec:ctmerge}
+The \texttt{merge} command concatenates multiple .crispr files into one
+\begin{lstlisting}
+$ crisprtools merge [-hs] [-o FILE] input.crispr{1,n}
+\end{lstlisting}
+ \begin{longtable}{  l    p{10cm} }
+  %  \hline
+    %Option & Definition \\  %\hline\hline   
+
+ \combinedoptionflag{h}{help} & output a basic usage help message. \\ \\
+\combinedoptionflag{s}{sanitise} & Change the group numbers so that the resulting file will contain consecutive group numbers.  Guarantees that no two group IDs conflict \\ \\
+\combinedoptionflagarg{o}{outfile}{FILE} & Output a new .crispr file with the contents of the original files [Default: \texttt{crisprtools\_merged.crispr}] \\ 
+
+    %\hline
+\end{longtable}
+
+\subsection{\lstinline$filter$}
+\label{sec:ctfilter}
+The \texttt{filter} command removed groups based on certain characteristics; for example the number of spacers that it contains.
+\begin{lstlisting}
+$ crisprtools filter [-h] [-o FILE] [-s INT] [-f INT] [-d INT] input.crispr
+\end{lstlisting}
+ \begin{longtable}{  l    p{10cm} }
+  %  \hline
+    %Option & Definition \\  %\hline\hline   
+
+ \combinedoptionflag{h}{help} & output a basic usage help message. \\ \\
+\combinedoptionflagarg{s}{spacer}{INT} & Filter groups so that they must have at least the number of spacers specified \\ \\
+\combinedoptionflagarg{f}{flanker}{INT} & Filter groups so that they must have at least the number of flankers specified \\ \\
+\combinedoptionflagarg{d}{direct-repeat}{INT} & Filter groups so that they must have at least the number of repeat variants specified \\ \\
+\combinedoptionflagarg{o}{outfile}{FILE} & Output a new .crispr file with the filtered contents of the original file [Default: change file inplace] \\ 
+
+    %\hline
+\end{longtable}
+
+\subsection{\lstinline$sanitise$}
+\label{sec:ctsanitise}
+The \texttt{sanitise} command changes the accession numbers of groups, spacer, flankers and repeats in a .crispr file.  This is an important operation to ensure that, particularly the group IDs to not conflict with each other. 
+\begin{lstlisting}
+$ crisprtools sanitise [-acdfhs] [-o FILE] input.crispr
+\end{lstlisting}
+ \begin{longtable}{  l    p{10cm} }
+  %  \hline
+    %Option & Definition \\  %\hline\hline   
+ \combinedoptionflag{a}{all} & same a specifying \optionflag{cdfs}. \\ \\
+ \combinedoptionflag{c}{contig} & Change the contig IDs. \\ \\
+ \combinedoptionflag{h}{help} & Output a basic usage help message. \\ \\
+\combinedoptionflag{s}{spacer} & Change the spacer IDs \\ \\
+\combinedoptionflag{f}{flanker} & Change the flanker IDs \\ \\
+\combinedoptionflag{d}{direct-repeat} & Change the repeat IDs \\ \\
+\combinedoptionflagarg{o}{outfile}{FILE} & Output a new .crispr file with the sanitised contents of the original file [Default: change file inplace] \\ 
+
+    %\hline
+\end{longtable}
+\subsection{\lstinline$draw$}
+\label{sec:ctdraw}
+The \texttt{draw} command can be used to create images of the spacer graphs using the Graphviz libraries.  You will need to have them installed, and be detected during configuration, otherwise the \texttt{draw} command will not be available. 
+
+\begin{lstlisting}
+$ crisprtools draw [-a STRING] [-c STRING] [-f STRING] 
+                     [-b INT] [-o FILE] [-g INT{1,n}]  input.crispr
+\end{lstlisting}
+ \begin{longtable}{  l    p{10cm} }
+  %  \hline
+    %Option & Definition \\  %\hline\hline   
+ \combinedoptionflagarg{a}{algorithm}{STIRNG} & Specify the Graphviz layout algorithm to use.  Possibilities are: \texttt{dot, neato, fdp, circo, sfdp, twopi} [Default: dot] \\ \\
+ \combinedoptionflagarg{c}{colour}{STRING} & Colour scheme for the output graph.  The colour is based on the coverage of the spacer.  The options are: red-blue, blue-red, red-blue-green, green-blue-red [Default: blue-red]\\ \\
+ \combinedoptionflag{h}{help} & Output a basic usage help message. \\ \\
+\combinedoptionflagarg{f}{format}{STIRNG} & The output format for the graph. [Default: eps] \\ \\
+\combinedoptionflagarg{g}{groups}{INT\{,n\}} & A comma separated list of group IDs that you would like to draw \\ \\
+\combinedoptionflagarg{b}{bins}{INT} & The number of colour steps between the highest and lowest coverage.  The default is the difference between max and min coverages. \\ \\
+\combinedoptionflagarg{o}{outfile}{FILE} & Output file for the image \\ 
+
+    %\hline
+\end{longtable}
+
+\section{The CRISPR File (.crispr)}
+\label{sec:Fileformats}
+The .crispr file is an XML format to describe all aspects of a CRISPR loci.  The bulk of the file specification will not be discussed in this manual, however the basics will be talked about to give you some idea of what it is and how Crass uses it.
+\subsection{Specification Overview}
+Each .crispr file contains a number of \lstinline[language=XML_new]$<group>$ tags, each one containing data about an individual CRISPR locus.  There are three sections for each group:
+\paragraph{The Data Section}
+This section gives you a list of all of the direct repeats (\lstinline[language=XML_new]$<drs>$), spacers (\lstinline[language=XML_new]$<spacers>$) and flanking (\lstinline[language=XML_new]$<flankers>$) that crass found.  Spacers will also have a coverage associated with them.
+\paragraph{The Metadata Section}
+This section lists all the other files that are associated with the CRISPR locus described in the group.  These include links to image files, and files containing raw sequence data.
+\paragraph{The Assembly Section}
+This represents all of the links between each spacer to all others.  Reading this section essentially equates to reading a graph of the spacer arrangement of the CRISPR locus
+
+\end{document}

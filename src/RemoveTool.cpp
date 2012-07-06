@@ -34,6 +34,7 @@
 
 #include <iostream>
 #include <cstdio>
+#include <getopt.h>
 #include "RemoveTool.h"
 #include "Exception.h"
 #include "StlExt.h"
@@ -47,7 +48,7 @@ int removeMain(int argc, char ** argv)
         
         std::set<std::string> groups;
         std::string output_file;
-        bool remove_files = true;
+        bool remove_files = false;
         int opt_index = processRemoveOptions(argc, argv, groups, output_file, remove_files);
         if(argc <= opt_index) {
             throw crispr::input_exception("Please specify an input file");
@@ -142,14 +143,21 @@ void removeUsage(void)
     std::cout<<"-h					print this handy help message"<<std::endl;
 	std::cout<<"-g INT[,n]          a comma separated list of group IDs that you would like to remove"<<std::endl;
     std::cout<<"-o FILE             output file name. Default behaviour changes file inplace"<<std::endl;
-    std::cout<<"-r                  Do not remove associated files"<<std::endl;
+    std::cout<<"-r                  Remove associated files"<<std::endl;
 }
 int processRemoveOptions(int argc, char ** argv, std::set<std::string>& groups, std::string& outputFile, bool& rem )
 {
     try {
         int c;
-        
-        while((c = getopt(argc, argv, "hg:o:r")) != -1)
+        int index;
+        static struct option long_options [] = {       
+            {"help", no_argument, NULL, 'h'},
+            {"groups",required_argument, NULL, 'g'},
+            {"remove-file", no_argument, NULL, 'r'},
+            {"outfile",required_argument,NULL, 'o'},
+            {0,0,0,0}
+        };
+        while((c = getopt_long(argc, argv, "hg:o:r", long_options, &index)) != -1)
         {
             switch(c)
             {
@@ -180,7 +188,7 @@ int processRemoveOptions(int argc, char ** argv, std::set<std::string>& groups, 
                 } 
                 case 'r':
                 {
-                    rem = false;
+                    rem = true;
                 }
                 default:
                 {

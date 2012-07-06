@@ -90,7 +90,7 @@ public:
         DT_OutputFormat = "eps";
         DT_LowerLimit = 10000000;
         DT_UpperLimit = 0;
-        DT_ColourType = RED_BLUE;
+        DT_ColourType = BLUE_RED;
         DT_Bins = -1;
     }
     

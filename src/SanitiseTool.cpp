@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+#include <getopt.h>
 #include "SanitiseTool.h"
 #include "Exception.h"
 #include "config.h"
@@ -23,7 +24,20 @@
 int SanitiseTool::processOptions (int argc, char ** argv)
 {
 	int c;
-	while((c = getopt(argc, argv, "ahscfdo:")) != -1)
+    int index;
+    static struct option long_options [] = {       
+        {"help", no_argument, NULL, 'h'},
+        {"all", no_argument, NULL, 'a'},
+        //{"groups",required_argument, NULL, 'g'},
+        {"spacer",no_argument,NULL,'s'},
+        {"direct-repeat", no_argument, NULL, 'd'},
+        {"flanker", no_argument, NULL, 'f'},
+        {"contig", no_argument, NULL, 'c'},
+        {"outfile",required_argument,NULL, 'o'},
+        //{"outfile-dir",required_argument,NULL,'O'},
+        {0,0,0,0}
+    };
+	while((c = getopt_long(argc, argv, "ahscfdo:", long_options, &index)) != -1)
 	{
         switch(c)
 		{
@@ -349,7 +363,7 @@ void sanitiseUsage(void)
     std::cout<<"-s                  Sanitise the spacers "<<std::endl;
 	std::cout<<"-d                  Sanitise the direct repeats "<<std::endl;
 	std::cout<<"-f                  Sanitise the flanking sequences "<<std::endl;
-	std::cout<<"-c                  Sanitise the contigs "<<std::endl;
+    std::cout<<"-c                  Sanitise the contigs "<<std::endl;
 
     
 

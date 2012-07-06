@@ -81,6 +81,8 @@ int ExtractTool::processOptions (int argc, char ** argv)
         {"direct-repeat", optional_argument, NULL, 'd'},
         {"flanker", optional_argument, NULL, 'f'},
         {"split-group", no_argument, NULL, 'x'},
+        {"outfile-prefix",required_argument,NULL, 'o'},
+        {"outfile-dir",required_argument,NULL,'O'},
         {0,0,0,0}
     };
 	while((c = getopt_long(argc, argv, "hH:g:Cs::d::f::xyo:O:", long_options, &index)) != -1)

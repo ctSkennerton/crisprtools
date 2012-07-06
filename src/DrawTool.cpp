@@ -24,7 +24,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <graphviz/gvc.h>
-
+#include <getopt.h>
 
 DrawTool::~DrawTool()
 {
@@ -43,8 +43,18 @@ int DrawTool::processOptions (int argc, char ** argv)
 {
 	try {
         int c;
-        
-        while((c = getopt(argc, argv, "hg:c:a:f:o:b:")) != -1)
+        int index;
+        static struct option long_options [] = {       
+            {"help", no_argument, NULL, 'h'},
+            {"outfile", required_argument, NULL, 'o'},
+            {"colour",required_argument,NULL,'c'},
+            {"bins", required_argument, NULL, 'b'},
+            {"format", required_argument, NULL, 'f'},
+            {"algorithm", required_argument, NULL, 'a'},
+            {"groups", required_argument, NULL, 'g'},
+            {0,0,0,0}
+        };
+        while((c = getopt_long(argc, argv, "hg:c:a:f:o:b:", long_options, &index)) != -1)
         {
             switch(c)
             {
@@ -466,6 +476,7 @@ void drawUsage(void)
 	std::cout<<"					are sometimes used in file names or in a .crispr file"<<std::endl;
 	std::cout<<"-a STRING           The Graphviz layout algorithm to use [default: dot ]"<<std::endl;
     std::cout<<"-f STRING           The output format for the image, equivelent to the -T parameter of Graphviz executables [default: eps]"<<std::endl;
+    std::cout<<"-b INT              Number of colour bins"<<std::endl;
     std::cout<<"-c COLOUR           The colour scale to use for coverage information.  The available choices are:"<<std::endl;
     std::cout<<"                        red-blue"<<std::endl;
     std::cout<<"                        blue-red"<<std::endl;
