@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Crisprtools by ctSkennerton</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">Crisprtools</h1>
+        <p class="header">small utilities for manipulating .crispr files</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/ctSkennerton/crisprtools/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/ctSkennerton/crisprtools/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/ctSkennerton/crisprtools">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/ctSkennerton">ctSkennerton</a></p>
+
+
+      </header>
+      <section>
+        <h3>What's it for?</h3>
+
+<p>Crisprtools was developed to parse the <a href="ctskennerton.github.com/crass/assets/crispr_spec.pdf">crispr file format</a>, which is an xml markup for describing Clustered Regularly Interspersed Short Palindromic Repeats.  Crisprtools is written in c++ and uses <a href="ctskennerton.github.com/libcrispr">libcrispr</a> for all the heavy lifting.  </p>
+
+<h3>What do you get?</h3>
+
+<p>Crisprtools is implemented as a single unix command-line executable that contains a number of subcommands, each for performing a type of query or manipulation of a crispr file.  Currently the subcommands are:</p>
+
+<ul>
+<li>stat</li>
+<li>extract</li>
+<li>filter</li>
+<li>rm</li>
+<li>merge</li>
+<li>draw</li>
+<li>sanitise</li>
+</ul><h3>Installation</h3>
+
+<p>Crisprtools is built using the GNU build system (autoconf) so in most unix systems you should be able to type the following commands:</p>
+
+<pre><code>[./autogen.sh]
+./configure
+make
+</code></pre>
+
+<p>Note that you must have <code>libcrispr</code> installed on your system first</p>
+
+<h3>Authors and Contributors</h3>
+
+<p>Crisprtools was primarily written by Connor Skennerton (<a href="https://github.com/ctSkennerton" class="user-mention">@ctSkennerton</a>) with contributions from Mike Imelfort (<a href="https://github.com/minillinim" class="user-mention">@minillinim</a>)</p>
+
+<h3>Found A bug?</h3>
+
+<p>Log an issue on <a href="https://github.com/ctSkennerton/crisprtools/issues">github</a> and I'll get right on it</p>
+
+<h3>Usage</h3>
+
+<pre><code> crisprtools &lt;command&gt; [&lt;args&gt;] &lt;file.crispr&gt;
+</code></pre>
+
+<h5>Commands and Options:</h5>
+
+<pre><code> merge [-hso OUTFILE] file1.crispr file2.crispr [1,n]
+      take two or more .crispr files and merge them together
+
+      -h       Output help message
+      -s       Sanitise the group names in the resulting output file
+           so that all groups have consecutive identifiers, and
+           that there are no clashes between group numbers
+      -o OUTFILE
+           Specify an output file for the merged .crispr file
+           [default: crisprtools_merged.crispr ]
+
+ sanitise [-ohcsdf] file.crispr
+      change names and accession numbers of groups, spacers and
+      flankers
+
+      -h       Output help message
+      -o OUTFILE
+           Output file name, creates a sanitised copy of the input
+           file  [default: sanitise input file inplace]
+      -s       Sanitise the spacers
+      -c       Sanitise the contigs
+      -d       Sanitise the direct repeats
+      -f       Sanitise the flanking sequences
+
+ extract [-ghyxsdfCoO] file.crispr
+      get data out of a .crispr file
+
+      -h       print this handy help message
+      -o DIR   Output file directory  [default: .]
+      -O STRING
+           Give a custom prefix to each of the outputed files
+           [default: ]
+      -g INT[,n]
+           A comma separated list of group IDs that you would like
+           to extract data from.  Note that only the group number
+           is needed, do not use prefixes like 'Group' or 'G',
+           which are sometimes used in file names or in a .crispr
+           file
+      -s       Extract the spacers of the listed group
+      -d       Extract the direct repeats of the listed group
+      -f       Extract the flanking sequences of the listed group
+      -C       Supress coverage information when printing spacers
+      -x       Split the results into different files for each group.
+           If multiple types are set i.e. -sd then both the spac-
+           ers and direct repeats from each group will be in the
+           one file
+      -y       Split the results into different files for each type of
+           sequence from all selected groups.  Only has an effect
+           if multiple types are set.
+
+ stat [-aghpst] [--header] file.crispr
+      get some statistics of the CRISPRs described
+
+      -a       print out aggregate summary, can be combined with -t -p
+      -h       print this handy help message
+      -H       print out column headers in tabular output
+      -g INT[,n]
+           a comma separated list of group IDs that you would like
+           to see stats for.
+      -p       pretty print
+      -s       separator string for tabular output [default: '']
+      -t       tabular output
+
+ rm [-ho] -g &lt;groups&gt; file.crispr
+      remove a group
+
+      -h       Output help message
+      -g INT[,n]
+           A comma separated list of group IDs that you would like
+           to remove
+      -o OUTFILE
+           Output file name. Default behaviour changes file
+           inplace
+
+ draw [-ghyoaf] file.crispr
+      render a graphviz image of some or all of the CRISPRs described
+      in the file
+
+      -h       print this handy help message
+      -o DIR   output file directory  [default: .]
+      -g INT[,n]
+           A comma separated list of group IDs that you would like
+           to extract data from.  Note that only the group number
+           is needed, do not use prefixes like 'Group' or 'G',
+           which are sometimes used in file names or in a .crispr
+           file
+      -a STRING
+           The Graphviz layout algorithm to use [default: dot ]
+      -f STRING
+           The output format for the image, equivelent to the -T
+           parameter of Graphviz executables [default: eps]
+      -c COLOUR
+           The colour scale to use for coverage information.  The
+           available choices are:
+               red-blue
+               blue-red
+               red-blue-green
+               green-blue-red
+
+ filter [-ohsdf] file.crisprr
+      remove groups based on criteria
+
+      -h       Print this handy help message
+      -o FILE  Output file name, creates a filtered copy of the input
+           file  [default: modify input file inplace]
+      -s INT   Filter based on the number of spacers the spacers
+      -d INT   Filter based on the direct repeats
+      -f INT   Filter based on the flanking sequences
+</code></pre>
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
