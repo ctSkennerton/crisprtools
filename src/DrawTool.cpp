@@ -37,6 +37,7 @@ DrawTool::~DrawTool()
         iter++;
     }
     gvFreeContext(DT_Gvc);
+
 }
 
 int DrawTool::processOptions (int argc, char ** argv)
@@ -54,6 +55,8 @@ int DrawTool::processOptions (int argc, char ** argv)
             {"groups", required_argument, NULL, 'g'},
             {0,0,0,0}
         };
+        
+        bool algo = false, outformat = false;
         while((c = getopt_long(argc, argv, "hg:c:a:f:o:b:", long_options, &index)) != -1)
         {
             switch(c)
@@ -104,6 +107,7 @@ int DrawTool::processOptions (int argc, char ** argv)
                 case 'f':
                 {
                     DT_OutputFormat = optarg;
+                    outformat = true;
                     break;
                 }
                 case 'a':
@@ -118,6 +122,7 @@ int DrawTool::processOptions (int argc, char ** argv)
                     } else {
                         throw crispr::input_exception("Not a known Graphviz rendering algorithm");
                     }
+                    algo = true;
                     break;
                 }
                 case 'b':
@@ -142,6 +147,9 @@ int DrawTool::processOptions (int argc, char ** argv)
                 }
             }
         }
+        if (!(algo & outformat) ) {
+            throw crispr::input_exception("You must specify both -a and -f on the command line");
+        }
 
     } catch (crispr::input_exception& e) {
         std::cerr<<e.what()<<std::endl;
@@ -165,7 +173,7 @@ void DrawTool::generateGroupsFromString ( std::string str)
 int DrawTool::processInputFile(const char * inputFile)
 {
     try {
-        crispr::xml::base xml_parser;
+        crispr::xml::parser xml_parser;
         xercesc::DOMDocument * input_doc_obj = xml_parser.setFileParser(inputFile);
         xercesc::DOMElement * root_elem = input_doc_obj->getDocumentElement();
         
@@ -206,7 +214,7 @@ int DrawTool::processInputFile(const char * inputFile)
     
     return 0;
 }
-void DrawTool::parseGroup(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser)
+void DrawTool::parseGroup(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser)
 {
 
     
@@ -249,7 +257,7 @@ void DrawTool::parseGroup(xercesc::DOMElement * parentNode, crispr::xml::base& x
 }
 
 void DrawTool::parseData(xercesc::DOMElement * parentNode, 
-                         crispr::xml::base& xmlParser, 
+                         crispr::xml::parser& xmlParser, 
                          crispr::graph * currentGraph)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
@@ -271,7 +279,7 @@ void DrawTool::parseData(xercesc::DOMElement * parentNode,
 }
 
 
-//void DrawTool::parseDrs(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser)
+//void DrawTool::parseDrs(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser)
 //{
 //    xercesc::DOMNodeList * children = parentNode->getChildNodes();
 //    const  XMLSize_t nodeCount = children->getLength();
@@ -289,7 +297,7 @@ void DrawTool::parseData(xercesc::DOMElement * parentNode,
 //    }
 //}
 void DrawTool::parseSpacers(xercesc::DOMElement * parentNode, 
-                            crispr::xml::base& xmlParser, 
+                            crispr::xml::parser& xmlParser, 
                             crispr::graph * currentGraph)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
@@ -338,7 +346,7 @@ void DrawTool::parseSpacers(xercesc::DOMElement * parentNode,
 }
 
 void DrawTool::parseFlankers(xercesc::DOMElement * parentNode, 
-                             crispr::xml::base& xmlParser, 
+                             crispr::xml::parser& xmlParser, 
                              crispr::graph * currentGraph)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
@@ -362,7 +370,7 @@ void DrawTool::parseFlankers(xercesc::DOMElement * parentNode,
 }
 
 void DrawTool::parseAssembly(xercesc::DOMElement * parentNode, 
-                             crispr::xml::base& xmlParser, 
+                             crispr::xml::parser& xmlParser, 
                              crispr::graph * currentGraph)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
@@ -382,7 +390,7 @@ void DrawTool::parseAssembly(xercesc::DOMElement * parentNode,
 }
 
 void DrawTool::parseContig(xercesc::DOMElement * parentNode, 
-                           crispr::xml::base& xmlParser, 
+                           crispr::xml::parser& xmlParser, 
                            crispr::graph * currentGraph, 
                            std::string& contigId)
 {
@@ -425,7 +433,7 @@ void DrawTool::parseContig(xercesc::DOMElement * parentNode,
 }
 
 void DrawTool::parseCSpacer(xercesc::DOMElement * parentNode, 
-                            crispr::xml::base& xmlParser, 
+                            crispr::xml::parser& xmlParser, 
                             crispr::graph * currentGraph, 
                             Agnode_t * currentGraphvizNode, 
                             std::string& contigId)
@@ -449,7 +457,7 @@ void DrawTool::parseCSpacer(xercesc::DOMElement * parentNode,
 }
 
 void DrawTool::parseLinkSpacers(xercesc::DOMElement * parentNode, 
-                                crispr::xml::base& xmlParser, 
+                                crispr::xml::parser& xmlParser, 
                                 crispr::graph * currentGraph, 
                                 Agnode_t * currentGraphvizNode, 
                                 EDGE_DIRECTION edgeDirection, 
@@ -471,7 +479,7 @@ void DrawTool::parseLinkSpacers(xercesc::DOMElement * parentNode,
 }
 
 void DrawTool::parseLinkFlankers(xercesc::DOMElement * parentNode, 
-                                 crispr::xml::base& xmlParser, 
+                                 crispr::xml::parser& xmlParser, 
                                  crispr::graph * currentGraph, 
                                  Agnode_t * currentGraphvizNode, 
                                  EDGE_DIRECTION edgeDirection, 
@@ -518,7 +526,7 @@ int drawMain (int argc, char ** argv)
 
 void drawUsage(void)
 {
-    std::cout<<PACKAGE_NAME<<" draw [-ghyoaf] file.crispr"<<std::endl;
+    std::cout<<PACKAGE_NAME<<" draw [-ghyo] -a ALGORITHM -f FORMAT file.crispr"<<std::endl;
 	std::cout<<"Options:"<<std::endl;
 	std::cout<<"-h					print this handy help message"<<std::endl;
     std::cout<<"-o DIR              output file directory  [default: .]" <<std::endl; 

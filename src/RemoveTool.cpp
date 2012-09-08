@@ -38,6 +38,7 @@
 #include "RemoveTool.h"
 #include <libcrispr/Exception.h>
 #include <libcrispr/StlExt.h>
+#include <libcrispr/parser.h>
 #include "config.h"
 #include "Utils.h"
 

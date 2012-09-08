@@ -21,7 +21,6 @@
 #define MERGETOOL_H
 #include <set>
 #include <string>
-#include <libcrispr/Xml.h>
 class MergeTool {
     std::set<std::string> MT_GroupIds;
     bool MT_Sanitise;

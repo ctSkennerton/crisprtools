@@ -18,9 +18,15 @@
 #include "FilterTool.h"
 #include <libcrispr/Exception.h>
 #include "config.h"
+#include <libcrispr/writer.h>
+#include <libcrispr/parser.h>
 #include <libcrispr/StlExt.h>
 #include <iostream>
 #include <getopt.h>
+#include "Utils.h"
+
+#define exists(container,searchThing )  container.find(searchThing) != container.end()
+
 
 int FilterTool::processOptions (int argc, char ** argv)
 {
@@ -32,9 +38,10 @@ int FilterTool::processOptions (int argc, char ** argv)
         {"spacer",required_argument,NULL,'s'},
         {"direct-repeat", required_argument, NULL, 'd'},
         {"flanker", required_argument, NULL, 'f'},
+        {"coverage",required_argument,NULL,'C'},
         {0,0,0,0}
     };
-	while((c = getopt_long(argc, argv, "hs:c:f:d:o:", long_options,&index)) != -1)
+	while((c = getopt_long(argc, argv, "hs:c:f:d:o:C:", long_options,&index)) != -1)
 	{
         switch(c)
 		{
@@ -77,6 +84,13 @@ int FilterTool::processOptions (int argc, char ** argv)
                 }
                 break;
             }
+            case 'C':
+            {
+                if(! from_string(FT_Coverage, optarg, std::dec)){
+                    crispr::input_exception("cannot convert arguement of -C to integer");
+                }
+                break;
+            }
             default:
             {
                 filterUsage();
@@ -101,7 +115,7 @@ int FilterTool::processInputFile(const char * inputFile)
                                         "Cannot create output xml file");
         }
         
-        crispr::xml::reader xml_parser;
+        crispr::xml::parser xml_parser;
         xercesc::DOMDocument * input_doc_obj = xml_parser.setFileParser(inputFile);
         xercesc::DOMElement * root_elem = input_doc_obj->getDocumentElement();
         if (!root_elem) {
@@ -121,7 +135,7 @@ int FilterTool::processInputFile(const char * inputFile)
              currentElement = currentElement->getNextElementSibling()) {
                 
             // the user wants to change any of these 
-            if (FT_Spacers || FT_Repeats || FT_Flank) {
+            if (FT_Spacers || FT_Repeats || FT_Flank || FT_Coverage) {
                 if (! parseGroup(currentElement, xml_parser)) {
                     good_children.push_back(currentElement);
                 }
@@ -157,21 +171,27 @@ bool FilterTool::parseGroup(xercesc::DOMElement * parentNode,
     // get the data tag and make sure that everything is good
     xercesc::DOMElement * currentElement = parentNode->getFirstElementChild();
     if (NULL != currentElement) {
+        std::set<std::string> spacers_to_remove;
 
-        return parseData(currentElement, xmlParser);             
-
+        if( parseData(currentElement, xmlParser, spacers_to_remove) ) return true;  
+        
+        // get the assembly node
+        currentElement = parentNode->getLastElementChild();
+        parseAssembly(currentElement, xmlParser, spacers_to_remove);
     } else {
         throw crispr::xml_exception(__FILE__,
                                     __LINE__,
                                     __PRETTY_FUNCTION__,
                                     "There is no Data");
     }
+    return false;
 }
 
 
 // return true if group should be removed
 bool FilterTool::parseData(xercesc::DOMElement * parentNode, 
-                           crispr::xml::reader& xmlParser)
+                           crispr::xml::reader& xmlParser,
+                           std::set<std::string>& spacersToRemove)
 {
     for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
          currentElement != NULL; 
@@ -185,9 +205,9 @@ bool FilterTool::parseData(xercesc::DOMElement * parentNode,
                 }
             }
         } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Spacers())) {
-            if (FT_Spacers) {
+            if (FT_Spacers | FT_Coverage) {
                 // change the spacers
-                if (FT_Spacers > parseSpacers(currentElement)) {
+                if (FT_Spacers > parseSpacers(currentElement, xmlParser, spacersToRemove)) {
                     return true;
                 }
             }
@@ -212,6 +232,123 @@ int FilterTool::countElements(xercesc::DOMElement * parentNode)
         ++count;
     }
     return count;
+}
+
+int FilterTool::parseSpacers(xercesc::DOMElement *parentNode, crispr::xml::reader& xmlParser, std::set<std::string>& spacersToRemove) {
+    if (FT_Coverage) {
+        std::vector<xercesc::DOMElement * > remove_list;
+        for (xercesc::DOMElement * currentSpacer = parentNode->getFirstElementChild(); 
+             currentSpacer != NULL; 
+             currentSpacer = currentSpacer->getNextElementSibling()) {
+            char * c_spacer_coverage = tc(currentSpacer->getAttribute(xmlParser.attr_Cov()));
+            int cov;
+            from_string(cov, c_spacer_coverage, std::dec);
+            xr(&c_spacer_coverage);
+            if (cov < FT_Coverage) {
+                // remove spacer
+                remove_list.push_back(currentSpacer);
+                char * c_spid = tc(currentSpacer->getAttribute(xmlParser.attr_Spid()));
+                spacersToRemove.insert(c_spid);
+                xr(&c_spid);
+            }
+        }
+        std::vector<xercesc::DOMElement * >::iterator iter;
+        for (iter = remove_list.begin(); iter != remove_list.end(); iter++) {
+            parentNode->removeChild(*iter);
+        }
+    } else if(FT_Spacers) {
+        return countElements(parentNode);
+    }
+    return 1;
+}
+
+void FilterTool::parseAssembly(xercesc::DOMElement * parentNode, 
+                             crispr::xml::reader& xmlParser, std::set<std::string>& spacersToRemove)
+{
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
+        
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Contig())) {
+            char * c_contig_id = tc(currentElement->getAttribute(xmlParser.attr_Cid()));
+            std::string contig_id = c_contig_id;
+            xr(&c_contig_id);
+            parseContig(currentElement, xmlParser, contig_id, spacersToRemove);
+        }
+        
+        
+    }
+    
+}
+
+void FilterTool::parseContig(xercesc::DOMElement * parentNode, 
+                           crispr::xml::reader& xmlParser, 
+                             std::string& contigId, std::set<std::string>& spacersToRemove)
+{
+    std::vector<xercesc::DOMElement* > remove_list;
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
+        
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Cspacer())) {
+            // get the node
+            char * c_spid = tc(currentElement->getAttribute(xmlParser.attr_Spid()));
+            
+            if(exists(spacersToRemove, c_spid)) {
+                remove_list.push_back(currentElement);
+                continue;
+            }            
+			xr(&c_spid);            
+            parseCSpacer(currentElement, xmlParser, contigId, spacersToRemove);
+        }
+    }
+    std::vector<xercesc::DOMElement* >::iterator iter;
+    for (iter = remove_list.begin(); iter != remove_list.end(); iter++) {
+        parentNode->removeChild(*iter);
+    }
+    
+}
+
+void FilterTool::parseCSpacer(xercesc::DOMElement * parentNode, 
+                            crispr::xml::reader& xmlParser, 
+                            std::string& contigId, std::set<std::string>& spacersToRemove)
+{
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
+        
+        if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Fspacers())) {
+            parseLinkSpacers(currentElement, xmlParser, contigId, spacersToRemove);
+            
+        } else if (xercesc::XMLString::equals(currentElement->getTagName(), xmlParser.tag_Bspacers())) {
+            parseLinkSpacers(currentElement, xmlParser, contigId, spacersToRemove);
+            
+        }
+        
+    }
+}
+
+void FilterTool::parseLinkSpacers(xercesc::DOMElement * parentNode, 
+                                crispr::xml::reader& xmlParser, 
+                                std::string& contigId, std::set<std::string>& spacersToRemove)
+{
+    std::vector<xercesc::DOMElement* > remove_list;
+
+    for (xercesc::DOMElement * currentElement = parentNode->getFirstElementChild(); 
+         currentElement != NULL; 
+         currentElement = currentElement->getNextElementSibling()) {
+        
+        char * c_spid = tc(currentElement->getAttribute(xmlParser.attr_Spid()));
+        if(exists(spacersToRemove, c_spid)) {
+            remove_list.push_back(currentElement);
+            continue;
+        } 
+        xr(&c_spid);
+    }
+    std::vector<xercesc::DOMElement* >::iterator iter;
+    for (iter = remove_list.begin(); iter != remove_list.end(); iter++) {
+        parentNode->removeChild(*iter);
+    }
 }
 
 int filterMain (int argc, char ** argv)
@@ -246,5 +383,6 @@ void filterUsage (void)
 	std::cout<<"-s INT              Filter based on the number of spacers the spacers "<<std::endl;
 	std::cout<<"-d INT              Filter based on the direct repeats "<<std::endl;
 	std::cout<<"-f INT              Filter based on the flanking sequences "<<std::endl;
+    std::cout<<"-C INT              Filter based on spacer coverage"<<std::endl;
 	//std::cout<<"-c INT				filter based on the contigs "<<std::endl;
 }

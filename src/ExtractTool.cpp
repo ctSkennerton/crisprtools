@@ -19,6 +19,7 @@
 #include "config.h"
 #include <libcrispr/Exception.h>
 #include <libcrispr/StlExt.h>
+#include <libcrispr/reader.h>
 #include <getopt.h>
 #include <string>
 #include <iostream>

@@ -36,7 +36,7 @@
 #define crisprtools_RemoveTool_h
 #include <string>
 #include <set>
-#include <libcrispr/Xml.h>
+#include <libcrispr/writer.h>
 
 int removeMain(int argc, char ** argv);
 void removeUsage(void);

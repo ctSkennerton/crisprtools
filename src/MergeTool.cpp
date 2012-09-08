@@ -17,6 +17,8 @@
 
 #include "MergeTool.h"
 #include <libcrispr/Exception.h>
+#include <libcrispr/writer.h>
+#include <libcrispr/reader.h>
 #include "config.h"
 #include <getopt.h>
 #include <sstream>

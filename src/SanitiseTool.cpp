@@ -18,6 +18,7 @@
 #include <getopt.h>
 #include "SanitiseTool.h"
 #include <libcrispr/Exception.h>
+#include <libcrispr/parser.h>
 #include "config.h"
 
 #include <iostream>

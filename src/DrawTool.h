@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libcrispr/Xml.h>
+#include <libcrispr/parser.h>
 #include "CrisprGraph.h"
 #include "Rainbow.h"
 #include <graphviz/gvc.h>
@@ -86,12 +86,11 @@ public:
     {
         DT_Gvc = gvContext();
         DT_Subset = false;
-        DT_RenderingAlgorithm = "dot";
-        DT_OutputFormat = "eps";
         DT_LowerLimit = 10000000;
         DT_UpperLimit = 0;
         DT_ColourType = BLUE_RED;
         DT_Bins = -1;
+
     }
     
     ~DrawTool();
@@ -106,17 +105,17 @@ public:
     int processOptions(int argc, char ** argv);
     void generateGroupsFromString ( std::string str);
     int processInputFile(const char * inputFile);
-    void parseGroup(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser);
-    void parseData(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * current_graph);
-    void parseDrs(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * current_graph);
-    void parseSpacers(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * current_graph);
-    void parseFlankers(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * current_graph);
+    void parseGroup(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser);
+    void parseData(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * current_graph);
+    void parseDrs(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * current_graph);
+    void parseSpacers(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * current_graph);
+    void parseFlankers(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * current_graph);
     
-    void parseAssembly(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * currentGraph);
-    void parseContig(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * currentGraph, std::string& contigId);
-    void parseCSpacer(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, std::string& contigId);
-    void parseLinkSpacers(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId);
-    void parseLinkFlankers(xercesc::DOMElement * parentNode, crispr::xml::base& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId);
+    void parseAssembly(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * currentGraph);
+    void parseContig(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * currentGraph, std::string& contigId);
+    void parseCSpacer(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, std::string& contigId);
+    void parseLinkSpacers(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId);
+    void parseLinkFlankers(xercesc::DOMElement * parentNode, crispr::xml::parser& xmlParser, crispr::graph * currentGraph, Agnode_t * currentGraphvizNode, EDGE_DIRECTION edgeDirection, std::string& contigId);
 
 };
 

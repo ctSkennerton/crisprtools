@@ -38,7 +38,27 @@
 namespace crispr {
 
         
-
+    int graph::setNodeAttribute(Agnode_t * node ,char * attrName, char * attrValue)
+    {
+        char * dummy = strdup("");
+        int ret = agsafeset(node, attrName, attrValue, dummy);
+        delete dummy;
+        return ret;
+    }  
+    int graph::setGraphAttribute(char * attrName, char * attrValue)
+    {
+        char * dummy = strdup("");
+        int ret = agsafeset(G_graph, attrName, attrValue, dummy);
+        delete dummy;
+        return ret;
+    }
+    int graph::setEdgeAttribute(Agedge_t * edge ,char * attrName, char * attrValue)
+    {
+        char * dummy = strdup("");
+        int ret = agsafeset(edge, attrName, attrValue, dummy);
+        delete dummy;
+        return ret;
+    }
     
 
 

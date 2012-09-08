@@ -23,7 +23,7 @@
 #include <vector>
 #include <string>
 #include <set>
-#include <libcrispr/Xml.h>
+#include <libcrispr/base.h>
 #include <libcrispr/StlExt.h>
 
 
@@ -121,7 +121,7 @@ public:
 
 class StatTool {
 
-    enum OUTPUT_STYLE {tabular, pretty, veryPretty};
+    enum OUTPUT_STYLE {tabular, pretty, veryPretty, coverage};
     
     std::set<std::string> ST_Groups;
     
@@ -133,6 +133,7 @@ class StatTool {
     std::string ST_OutputFileName;
     bool ST_WithHeader;
     bool ST_AggregateStats;
+    bool ST_DetailedCoverage;
     //bool ST_Tabular;
     std::string ST_Separator;
     OUTPUT_STYLE ST_OutputStyle;
@@ -145,6 +146,7 @@ public:
         ST_AssemblyStats = false;
         ST_WithHeader = false;
         ST_AggregateStats = false;
+        ST_DetailedCoverage = false;
         //ST_Tabular = true;
         ST_Separator = "\t";
         ST_OutputStyle = tabular;
@@ -173,6 +175,7 @@ public:
     void veryPrettyPrint(StatManager * sm, int longestConsensus, int longestGID);
     void printHeader(void);
     void printTabular(StatManager * sm);
+    void printCoverage(StatManager * sm);
     void printAggregate(AStats * agregateStats);
     std::vector<StatManager *>::iterator begin(){return ST_StatsVec.begin();}
     std::vector<StatManager *>::iterator end(){return ST_StatsVec.end();}

@@ -18,6 +18,7 @@
 #include "StatTool.h"
 #include "config.h"
 #include <libcrispr/Exception.h>
+#include <libcrispr/reader.h>
 #include "Utils.h"
 #include <iostream>
 #include <fstream>
@@ -43,7 +44,10 @@ StatTool::~StatTool()
 int StatTool::processOptions (int argc, char ** argv)
 {
 	int c, index;
-    struct option long_opts [] = { {"header", no_argument, NULL, 'H'} };
+    struct option long_opts [] = { 
+        {"header", no_argument, NULL, 'H'},
+        {"coverage", no_argument, NULL, 0}
+    };
 	while((c = getopt_long(argc, argv, "ahHg:pPs:o:", long_opts, &index)) != -1)
 	{
         switch(c)
@@ -98,6 +102,14 @@ int StatTool::processOptions (int argc, char ** argv)
             case 'H':
             {
                 ST_WithHeader = true;
+                break;
+            }
+            case 0:
+            {
+                if (! strcmp("coverage", long_opts[index].name)) {
+                    ST_DetailedCoverage = true;
+                    ST_OutputStyle = coverage;
+                }
                 break;
             }
             default:
@@ -193,6 +205,9 @@ int StatTool::processInputFile(const char * inputFile)
                     break;
                 case veryPretty:
                     veryPrettyPrint(*iter, longest_consensus, longest_gid);
+                    break;
+                case coverage:
+                    printCoverage(*iter);
                     break;
                 default:
                     break;
@@ -484,6 +499,25 @@ void StatTool::printAggregate( AStats * agregate_stats)
     std::cout<<agregate_stats->total_flanker_length/agregate_stats->total_groups<<ST_Separator;
     std::cout<<agregate_stats->total_reads/agregate_stats->total_groups<<std::endl;
 }
+
+void StatTool::printCoverage(StatManager * sm)
+{
+    std::cout<< sm->getGid()<<ST_Separator;
+    std::cout<< sm->getConcensus()<<ST_Separator;
+    std::map<int, int> histogram;
+    std::vector<int> coverage = sm->getSpCovVec();
+    std::vector<int>::iterator iter;
+    for (iter = coverage.begin(); iter != coverage.end(); iter++) {
+        addOrIncrement(histogram, *iter);
+    }
+    std::map<int, int>::iterator h_iter;
+    for (h_iter = histogram.begin(); h_iter != histogram.end(); h_iter++) {
+        std::cout<<h_iter->first<<":"<<h_iter->second<<",";
+    }
+    std::cout<<std::endl;
+
+    
+}
 int statMain (int argc, char ** argv)
 {
     try {
@@ -517,4 +551,5 @@ void statUsage(void)
     std::cout<<"-p                  pretty print"<<std::endl;
     std::cout<<"-s                  separator string for tabular output [default: '\t']"<<std::endl;
     std::cout<<"-t                  tabular output"<<std::endl;
+    std::cout<<"--coverage          Create a detailed report on the spacer coverage for each group"<<std::endl;
 }
