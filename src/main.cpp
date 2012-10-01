@@ -1,7 +1,7 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * main.cpp
- * Copyright (C) Connor Skennerton 2011 <c.skennerton@gmail.com>
+ * Copyright (C) Connor Skennerton 2011, 2012 <c.skennerton@gmail.com>
  * 
  * crisprtools is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
