@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT(crisprtools, 0.1.6, c.skennerton@gmail.com)
+AC_INIT(crisprtools, 0.1.7, c.skennerton@gmail.com)
 
 AC_CONFIG_AUX_DIR(build)
 AC_CONFIG_MACRO_DIR([m4])

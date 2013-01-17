@@ -491,13 +491,33 @@ void StatTool::printAggregate( AStats * agregate_stats)
     std::cout<<agregate_stats->total_groups<<ST_Separator;
     std::cout<<"*"<<ST_Separator;
     std::cout<<agregate_stats->total_dr<<ST_Separator;
-    std::cout<<agregate_stats->total_dr_length/agregate_stats->total_groups<<ST_Separator;
+    if (agregate_stats->total_groups != 0) {
+        std::cout<<agregate_stats->total_dr_length/agregate_stats->total_groups<<ST_Separator;
+    } else {
+        std::cout<<0<<ST_Separator;
+    }
     std::cout<<agregate_stats->total_spacers<<ST_Separator;
-    std::cout<<agregate_stats->total_spacer_length/agregate_stats->total_groups<<ST_Separator;
-    std::cout<<agregate_stats->total_spacer_cov/agregate_stats->total_groups<<ST_Separator;
+    if (agregate_stats->total_groups != 0) {
+        std::cout<<agregate_stats->total_spacer_length/agregate_stats->total_groups<<ST_Separator;
+    } else {
+        std::cout<<0<<ST_Separator;
+    }
+    if (agregate_stats->total_groups != 0) {
+        std::cout<<agregate_stats->total_spacer_cov/agregate_stats->total_groups<<ST_Separator;
+    } else {
+        std::cout<<0<<ST_Separator;
+    }
     std::cout<<agregate_stats->total_flanker<<ST_Separator;
-    std::cout<<agregate_stats->total_flanker_length/agregate_stats->total_groups<<ST_Separator;
-    std::cout<<agregate_stats->total_reads/agregate_stats->total_groups<<std::endl;
+    if (agregate_stats->total_groups != 0) {
+        std::cout<<agregate_stats->total_flanker_length/agregate_stats->total_groups<<ST_Separator;
+    } else {
+        std::cout<<0<<ST_Separator;
+    }
+    if (agregate_stats->total_groups != 0) {
+        std::cout<<agregate_stats->total_reads/agregate_stats->total_groups<<std::endl;
+    } else {
+        std::cout<<0<<std::endl;
+    }
 }
 
 void StatTool::printCoverage(StatManager * sm)
