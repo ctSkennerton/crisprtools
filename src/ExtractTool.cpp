@@ -432,6 +432,10 @@ int extractMain (int argc, char ** argv)
 			throw crispr::input_exception("No input file provided" );
 		
         } else {
+            std::ifstream infile(argv[opt_index]);
+            if (! infile.good()) {
+                throw crispr::input_exception("cannot open input file");
+            }
 			// get cracking and process that file
 			return et.processInputFile(argv[opt_index]);
 		}
