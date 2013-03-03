@@ -53,12 +53,18 @@ void ExtractTool::setOutputBuffer(std::ofstream& out, const char * file) {
     if (NULL != file) {
         // has argument
         // open output buffer
-        out.open((ET_OutputPrefix + ET_OutputHeaderPrefix + file).c_str());
+        std::string filename = ET_OutputPrefix + ET_OutputHeaderPrefix + file;
+        out.open(filename.c_str());
         if (!out) {
+            std::stringstream msg;
+            msg << "failed to open output file: " << filename <<"\n";
+            msg << "Make sure that the path exists and remember ";
+            msg << "to only give the basename when specifying -d, -s and -f and specify the directory ";
+            msg <<"with the -o option on the command line"<<std::endl;
             throw crispr::runtime_exception(__FILE__, 
                                             __LINE__, 
                                             __PRETTY_FUNCTION__, 
-                                            "failed to open output file");
+                                            msg);
         }
     } else {
         //default stream
