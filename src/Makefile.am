@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 bin_PROGRAMS = crisprtools
-crisprtools_CXXFLAGS = @LIBCRISPR_CPPFLAGS@ -Werror -Wall -pedantic
+crisprtools_CXXFLAGS = @LIBCRISPR_CPPFLAGS@ @XERCES_CPPFLAGS@ -Werror -Wall -pedantic
 crisprtools_LDFLAGS = @LIBCRISPR_LDFLAGS@ @GV_LIBS@ @LIBCRISPR_LIBS@
 crisprtools_SOURCES = \
 	main.cpp \
